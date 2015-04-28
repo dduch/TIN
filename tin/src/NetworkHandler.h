@@ -9,12 +9,10 @@
 
 class NetworkHandler
 {
-private:
+protected:
 	bool createSocket();
 	void closeSocket(int socket);
 	virtual bool bindSocket() = 0;
-
-protected:
 	int sockfd;
 	int port;
 	struct sockaddr_in myAddress;

@@ -3,6 +3,3 @@
 Downloader:: Downloader() {}
 
 Downloader:: ~Downloader() {}
-
-bool Downloader::NetworkHandler::bindSocket() {
-}
