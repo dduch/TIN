@@ -3,6 +3,8 @@
 #include "NetworkHandler.h"
 
 class Downloader : public NetworkHandler{
+protected:
+	bool bindSocket();
 public:
 	Downloader();
 	~Downloader();

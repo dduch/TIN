@@ -1,9 +1,11 @@
 #ifndef NETWORKHANDLER_H_
 #define NETWORKHANDLER_H_
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+
 #define SERVER_PORT 9930
 
 
