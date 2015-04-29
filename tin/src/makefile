@@ -31,7 +31,7 @@ SRCS = main.cpp  Downloader.cpp FileManager.cpp Listener.cpp Logger.cpp NetworkH
 OBJS = $(SRCS:.c=.o)
 
 # define the executable file 
-MAIN = main
+MAIN = ../bin/main
 
 #
 # The following part of the makefile is generic; it can be used to 
