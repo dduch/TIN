@@ -16,5 +16,8 @@
 *.x86_64
 *.hex
 
-# bin catalog
-tin/bin
+# bin catalog content
+tin/bin/**
+
+# dolhpin config files (?)
+.directory
