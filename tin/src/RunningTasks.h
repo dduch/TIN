@@ -6,9 +6,9 @@ class RunningTasks
 private:
 	RunningTasks();
 	~RunningTasks();
-	static RunningTasks& instance;
+	static RunningTasks* instance;
 public:
-	static RunningTasks& getIstance();
+	static RunningTasks* getIstance();
 };
 
 #endif

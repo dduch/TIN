@@ -9,21 +9,19 @@
 #include <stdio.h>
 
 
-NetworkHandler:: NetworkHandler(){
-
-}
-
-NetworkHandler:: ~NetworkHandler(){
-	closeSocket(this-> sockfd);
-}
-
+/*
+ * create socket for udp connection
+ */
 bool NetworkHandler:: createSocket(){
-	if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1){
+	if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1){
 		return false;
 	}
 	return true;
 }
 
+/*
+ * close created socked
+ */
 void NetworkHandler:: closeSocket(int socket){
 	close(socket);
 }

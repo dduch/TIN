@@ -3,10 +3,13 @@
 #include "NetworkHandler.h"
 
 class Downloader : public NetworkHandler{
-protected:
+private:
+	bool sendBroadcast(char* request);
 	bool bindSocket();
+	bool connectInit();
+	struct sockaddr_in serverAddress;
 public:
-	Downloader();
+	Downloader(char* req);
 	~Downloader();
 };
 

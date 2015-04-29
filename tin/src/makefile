@@ -2,7 +2,7 @@
 CC = g++
 
 # define any compile-time flags
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -pthread
 
 # define any directories containing header files other than /usr/include
 #

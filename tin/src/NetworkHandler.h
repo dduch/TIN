@@ -6,25 +6,25 @@
 #include <netinet/in.h>
 #include <string.h>
 
-#define SERVER_PORT 9930
+#define SERVER_PORT 6055
 
-
+/*
+ * Abstract class which is an interface for other
+ * classes responisble for network connection and transfer
+ */
 class NetworkHandler
 {
 protected:
 	bool createSocket();
 	void closeSocket(int socket);
 	virtual bool bindSocket() = 0;
-	int sockfd;
-	int port;
 	struct sockaddr_in myAddress;
-		
+	int sockfd, myPort;
+
 public:
-	NetworkHandler();
-	~NetworkHandler();
 	void sendDatagram();
 	void reciveDatagram();
-	void sendBroadcast();
+	static void run();
 };
 
 #endif 

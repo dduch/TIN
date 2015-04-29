@@ -1,6 +1,7 @@
 #include "UI.h"
 #include <iostream>
 #include <string>
+#include "Downloader.h"
 
 const std::string GET = "get";
 const std::string CANCEL = "cancel";
@@ -15,7 +16,8 @@ UI:: UI(){
 
 void UI::parseCommand(std::string command){
 	if(command.find(GET) != std::string::npos){
-
+		char *req = &command[0u];
+		new Downloader(req);
 	}
 	else if(command.find(CANCEL)!= std::string::npos){
 

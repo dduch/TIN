@@ -7,7 +7,6 @@ private:
 public:
 	ProtocolHandler();
 	~ProtocolHandler();
-		
 };
 
 #endif 
