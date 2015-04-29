@@ -6,7 +6,8 @@ const std::string GET = "get";
 const std::string CANCEL = "cancel";
 const std::string SHOW = "show";
 const std::string TRASFERINFO = "transferinf";
-
+const std::string HELP = "help";
+const std::string HELP_INFO = "Possible commands: get, cancel, show, tranferinf\n";
 
 UI:: UI(){
 
@@ -25,8 +26,11 @@ void UI::parseCommand(std::string command){
 	else if(command.find(TRASFERINFO) != std::string::npos){
 
 	}
+	else if(command.find(HELP) != std::string::npos){
+		std::cout<<HELP_INFO<<std::endl;
+	}
 	else{
-		std::cout<<"Unresolved command"<<std::endl;
+		std::cout<<"Unresolved command, use help"<<std::endl;
 		return;
 	}
 }
