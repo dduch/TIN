@@ -8,7 +8,8 @@ Listener:: Listener(){
 }
 
 Listener:: ~Listener(){
-	closeSocket(this->sockfd);
+	std::cout<<"destruktor";
+	closeSocket(sockfd);
 }
 
 /*
@@ -40,23 +41,12 @@ bool Listener::bindSocket() {
 }
 
 
-void Listener:: startListen(){
-	socklen_t srcAddressLen = sizeof(srcAddress);
-    while(1)
-    {
-    	std::cout<<"slucham";
-        if (recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&srcAddress, &srcAddressLen)==-1){
-        }
-        printf("Received packet from %s:%d\nData: %s\n\n",
-               inet_ntoa(srcAddress.sin_addr), ntohs(srcAddress.sin_port), buffer);
-    }
-}
 
 void* Listener:: run(void*){
 	Listener* listener = Listener::getInstance();
 	if(listener->createSocket() && listener->bindSocket())
 	{
-		listener->startListen();
+		listener->startListen(listener->srcAddress,listener->sockfd);
 	}
 }
 

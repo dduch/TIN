@@ -6,7 +6,7 @@
 #include <netinet/in.h>
 #include <string.h>
 
-#define SERVER_PORT 6055
+#define SERVER_PORT 9055
 
 /*
  * Abstract class which is an interface for other
@@ -15,10 +15,12 @@
 class NetworkHandler
 {
 protected:
+	void startListen(sockaddr_in address, int sockfd);
 	bool createSocket();
 	void closeSocket(int socket);
 	virtual bool bindSocket() = 0;
-	struct sockaddr_in myAddress;
+	char buffer[500];
+	struct sockaddr_in myAddress,srcAddress;
 	int sockfd, myPort;
 
 public:

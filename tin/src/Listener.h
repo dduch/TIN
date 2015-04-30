@@ -12,15 +12,12 @@
 class Listener : public NetworkHandler {
 private:
 	Listener();
-	void startListen();
 	static Listener* instance;
 
 protected:
 	bool bindSocket();
 
 public:
-	char buffer[500];
-	struct sockaddr_in srcAddress;
 	~Listener();
 	static void* run(void*);
 	static Listener* getInstance();

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <iostream>
 
 
 /*
@@ -25,3 +26,19 @@ bool NetworkHandler:: createSocket(){
 void NetworkHandler:: closeSocket(int socket){
 	close(socket);
 }
+
+/*
+ *
+ */
+void NetworkHandler:: startListen(sockaddr_in srcAddress, int sockfd){
+	socklen_t addressLen = sizeof(srcAddress);
+    while(1)
+    {
+    	std::cout<<"slucham";
+        if (recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&srcAddress, &addressLen) == -1){
+        }
+        printf("Received packet from %s:%d\nData: %s\n\n",
+               inet_ntoa(srcAddress.sin_addr), ntohs(srcAddress.sin_port), buffer);
+    }
+}
+

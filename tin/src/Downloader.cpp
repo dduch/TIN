@@ -22,6 +22,7 @@ bool Downloader::bindSocket() {
 }
 
 bool Downloader:: connectInit(){
+	memcpy((char *) &server.sin_addr, (char *) hp->h_addr, hp->h_length);
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_addr.s_addr = INADDR_BROADCAST;
 	serverAddress.sin_port = SERVER_PORT;
