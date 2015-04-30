@@ -2,11 +2,11 @@
 CC = g++
 
 # define any compile-time flags
-CFLAGS = -Wall -g -pthread
+CXXFLAGS = -Wall -g -pthread -std=c++0x
 
 # define any directories containing header files other than /usr/include
 #
-INCLUDES = -I/home/newhall/include  -I../include Downloader.h FileManager.h Listener.h Logger.h NetworkHandler.h ProtocolHandler.h RunningTasks.h Sender.h UI.h 
+INCLUDES = -I/home/newhall/include  -I../include Downloader.h FileManager.h Listener.h Logger.h MessagePrinter.h NetworkHandler.h ProtocolHandler.h RunningTasks.h Sender.h UI.h 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
@@ -18,7 +18,7 @@ INCLUDES = -I/home/newhall/include  -I../include Downloader.h FileManager.h List
 #LIBS = -lmylib -lm
 
 # define the C source files
-SRCS = main.cpp  Downloader.cpp FileManager.cpp Listener.cpp Logger.cpp NetworkHandler.cpp ProtocolHandler.cpp RunningTasks.cpp Sender.cpp UI.cpp #Dopisywać tu pliki .c, .cpp
+SRCS = main.cpp  Downloader.cpp FileManager.cpp Listener.cpp Logger.cpp MessagePrinter.cpp NetworkHandler.cpp ProtocolHandler.cpp RunningTasks.cpp Sender.cpp UI.cpp #Dopisywać tu pliki .c, .cpp
 
 # define the C object files 
 #
@@ -45,14 +45,14 @@ all:    $(MAIN)
 	@echo  Project has been compiled
 
 $(MAIN): $(OBJS) 
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
+	$(CC) $(CXXFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file) 
 # (see the gnu make manual section about automatic variables)
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
+	$(CC) $(CXXFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean:
 	$(RM) *.o *~ $(MAIN)

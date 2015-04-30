@@ -1,9 +1,11 @@
+#include <cstdlib>
 #include <iostream>
 #include <pthread.h>
 #include <iostream>
 #include <cstdlib>
 #include "UI.h"
 #include "Listener.h"
+#include "RunningTasks.h"
 
 int main(){
 	pthread_t listnerId;
@@ -14,8 +16,11 @@ int main(){
         std::exit(-1);
     }
 
-	UI* userUI = new UI();
-	userUI->waitForCommand();
-
-	pthread_exit(NULL);
+    RunningTasks::setMaxTask(3); // Okreslamy max liczbe obslugiwanych downloaderow
+    
+    UI userUI;
+    userUI.run();
+  
+    std::exit(0);
+    //pthread_exit(NULL);
 }
