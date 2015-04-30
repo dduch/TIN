@@ -38,6 +38,8 @@ public:
 	unsigned int isRESP(struct ProtocolPacket packet);
 	unsigned int isRD(struct ProtocolPacket packet);
 	unsigned int isERR(struct ProtocolPacket packet);
+	char* prepareDatagram(struct ProtocolPacket packet);
+	struct ProtocolPacket interpretDatagram(char* datagram, unsigned int datagram_size);
 
 	~ProtocolHandler();
 };

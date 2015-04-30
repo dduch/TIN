@@ -103,4 +103,19 @@ unsigned int ProtocolHandler::isERR(struct ProtocolPacket packet)
 	return packet.type == ERR;
 }
 
+char* ProtocolHandler::prepareDatagram(struct ProtocolPacket packet)
+{
+	char* datagram = new char[sizeof(packet)];
+	memcpy(datagram, &packet, sizeof(packet));
+	return datagram;
+}
+
+struct ProtocolPacket ProtocolHandler::interpretDatagram(char* datagram, unsigned int datagram_size)
+{
+	struct ProtocolPacket packet;
+	memcpy(&packet, datagram, datagram_size);
+	return packet;
+}
+
+
 
