@@ -6,15 +6,20 @@ Downloader:: Downloader(char* req) {
 		sendBroadcast(req);
 	}
 }
-Downloader:: ~Downloader() {}
+
+Downloader:: ~Downloader() {
+	std::cout<<"destruktor";
+	closeSocket(sockfd);
+}
 
 bool Downloader::bindSocket() {
 	int on = 1;
 	setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &(on), sizeof(on));
+	bzero(&myAddress, sizeof(myAddress));
 	myAddress.sin_family = AF_INET;
-    myAddress.sin_addr.s_addr = INADDR_ANY;
+    myAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     myAddress.sin_port = 0;
-    if(bind(sockfd, (struct sockaddr *) &myAddress, sizeof myAddress) == -1)
+    if(bind(sockfd, (struct sockaddr *) &myAddress, sizeof(myAddress)) == -1)
     {
     	return false;
     }
@@ -22,12 +27,12 @@ bool Downloader::bindSocket() {
 }
 
 bool Downloader:: connectInit(){
-	memcpy((char *) &server.sin_addr, (char *) hp->h_addr, hp->h_length);
+	bzero(&serverAddress, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
-	serverAddress.sin_addr.s_addr = INADDR_BROADCAST;
-	serverAddress.sin_port = SERVER_PORT;
+	serverAddress.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+	serverAddress.sin_port = htons(SERVER_PORT);
 
-    if (connect(sockfd, (struct sockaddr *) &serverAddress, sizeof serverAddress) == -1) {
+    if (connect(sockfd, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) == -1) {
         return false;
     }
     return true;
@@ -35,7 +40,12 @@ bool Downloader:: connectInit(){
 
 
 bool Downloader:: sendBroadcast(char* req){
-	if(sendto(sockfd, req, sizeof(req), 0, (struct sockaddr *) &serverAddress, sizeof serverAddress) == -1){
+	/*if(sendto(sockfd, req, sizeof(req), 0, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) == -1){
+		std::cout<<"nie wysłano";
+		return false;
+	}*/
+	// skoro zrobilismy connect(), to mozemy skorzystac z funkcji send():
+	if(send(sockfd, req, sizeof(req), 0) == -1){
 		std::cout<<"nie wysłano";
 		return false;
 	}

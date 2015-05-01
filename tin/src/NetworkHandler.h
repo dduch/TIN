@@ -12,20 +12,21 @@
  * Abstract class which is an interface for other
  * classes responisble for network connection and transfer
  */
-class NetworkHandler
-{
+class NetworkHandler {
+
 protected:
 	void startListen(sockaddr_in address, int sockfd);
 	bool createSocket();
 	void closeSocket(int socket);
 	virtual bool bindSocket() = 0;
+	
 	char buffer[500];
-	struct sockaddr_in myAddress,srcAddress;
+	struct sockaddr_in myAddress, srcAddress;
 	int sockfd, myPort;
 
 public:
 	void sendDatagram();
-	void reciveDatagram();
+	void receiveDatagram();
 	static void run();
 };
 
