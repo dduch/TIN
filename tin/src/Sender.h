@@ -6,7 +6,6 @@ class Sender : public NetworkHandler{
 public:
 	Sender();
 	~Sender();
-
 };
 
 #endif
