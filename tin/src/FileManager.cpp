@@ -77,7 +77,7 @@ size_t FileManager::readFile(int fd, void *buf, size_t buflen) {
 }
 
 /*
-Dopisuje 'buflen' bajtów do pliku o desjryptorze 'fd' z bufora 'buf'.
+Dopisuje 'buflen' bajtów do pliku o deskryptorze 'fd' z bufora 'buf'.
 Zwraca:
 - liczbę zapisanych bajtów
 - -1 gdy nastąpi błąd inny od EBADF i EINVAL (patrz: errno)
@@ -95,4 +95,22 @@ size_t FileManager::appendFile(int fd, void *buf, size_t buflen) {
 			return -1;
 	}
 	return bytesWritten;
+}
+
+/*
+Odczytuje wielkosc pliku w bajtach o deskryptorze 'fd'.
+Zwraca:
+- liczbę zapisanych bajtów
+- -1 gdy nastąpi błąd inny od EBADF i EINVAL (patrz: errno)
+- -2 gdy nastąpi błąd EBADF lub EINVAL (nieprawidłowy deskryptor lub plik nie jest otwarty do pisania)
+*/
+int FileManager::getFileSize(int fd) {
+	int bytes = lseek(fd, 0, SEEK_END);
+	if (bytes < 0) {
+		if (errno == EBADF || errno == EINVAL)
+			return -2;
+		else
+			return -1
+	}
+	return bytes;
 }

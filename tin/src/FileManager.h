@@ -19,6 +19,7 @@ namespace FileManager {
 	bool closeFile(int fd);					// zamkniecie otwartego pliku
 	size_t readFile(int fd, void *buf, size_t buflen);	// czytanie z otwartego pliku
 	size_t appendFile(int fd, void *buf, size_t buflen);	// pisanie do otwartego pliku
+	int getFileSize(int fd);				// odczytanie wielkosci pliku w bajtach
 };
 
 #endif

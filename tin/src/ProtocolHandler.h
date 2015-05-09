@@ -10,6 +10,9 @@
 #define ERR 		0x05
 #define WTF			0xff
 
+//maksymalna wielkosc w bajtach pola danych w DATA:
+#define MAX_DATA_BLOCK_SIZE 4096
+
 struct ProtocolPacket
 {
 	unsigned int type :4;			//typ pakietu: RQ, RESP, RD, DATA, ACK, ERR
