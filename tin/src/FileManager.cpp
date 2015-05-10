@@ -110,7 +110,7 @@ int FileManager::getFileSize(int fd) {
 		if (errno == EBADF || errno == EINVAL)
 			return -2;
 		else
-			return -1
+			return -1;
 	}
 	return bytes;
 }

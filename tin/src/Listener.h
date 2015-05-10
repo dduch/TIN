@@ -1,6 +1,7 @@
 #ifndef LISTNER_H_
 #define LISTENER_H_
 #include "NetworkHandler.h"
+#include "Sender.h"
 #include <stdio.h>
 
 /*
@@ -9,15 +10,22 @@
  */
 class Listener : public NetworkHandler {
 private:
-	Listener();									// prywatny konstruktor
-	static Listener* instance;					// statyczny wskaźnik do instancji klasy
+	Listener();												// prywatny konstruktor
+	static Listener* instance;										// statyczny wskaźnik do instancji klasy
 
 protected:
-	bool bindSocket();							// dowiąż adres do gniazda
+	void handleRQPacket(ProtocolPacket req, sockaddr_in src_address);
+	void handleRDPacket(ProtocolPacket req, sockaddr_in src_address);
+
+	//odzidziczone funkcje wirtualne
+	virtual bool bindSocket();							
+	virtual void receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address);
+	virtual void startListen(sockaddr_in address, int sockfd);	
+
 
 public:
-	~Listener();								// zamknij gniazdo - zwolnij port
-	static void* run(void*);					// statyczna metoda uruchamiana w nowym wątku
-	static Listener* getInstance();				// Zwraca wskaźnik do istniejącej instancji lub tworzy
-};												// nową jęsli takowej nie było
+	~Listener();												// zamknij gniazdo - zwolnij port
+	static void* run(void*);										// statyczna metoda uruchamiana w nowym wątku
+	static Listener* getInstance();										// Zwraca wskaźnik do istniejącej instancji lub tworzy
+};														// nową jęsli takowej nie było
 #endif

@@ -1,4 +1,6 @@
 #include "UI.h"
+#include <string.h>
+
 
 // Komunikaty do wypisywania (a przynajmniej wiekszosc z nich)
 
@@ -187,14 +189,11 @@ void UI::startNewTransfer(){
         // Przyklad ponizej
 
         MessagePrinter::print(tmp);
-
-        // To jest przyklad testowy:
-	/*
         pthread_t tid;
 
-        if (pthread_create(&tid, NULL, Downloader::run, (void*) newTransferID)) {
+        if (pthread_create(&tid, NULL, Downloader::run, newTransferID)) {
             MessagePrinter::print("Error while initializing thread");
-        }*/
+        }
         // Koniec przykladu testowego
     }
 }

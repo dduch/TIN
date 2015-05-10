@@ -1,6 +1,5 @@
 #include <cstdlib>
 #include <iostream>
-#include <pthread.h>
 #include <iostream>
 #include <cstdlib>
 #include "UI.h"

@@ -1,4 +1,5 @@
 #include "NetworkHandler.h"
+#include "ProtocolHandler.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -9,7 +10,9 @@
 #include <stdio.h>
 #include <iostream>
 
+NetworkHandler:: ~NetworkHandler(){
 
+}
 /*
  * Utworzenie nowego gniazda UDP
  * W przypadku sukcesu uzupełnia deskryptor gniazda
@@ -28,18 +31,8 @@ void NetworkHandler:: closeSocket(int socket){
 	close(socket);
 }
 
-/*
- *Rozpoczyna nasłuchiwanie na gniezdzie serwerowym
- */
-void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd){
-	socklen_t address_len = sizeof(src_address);
-    while(1)
-    {
-        if (recvfrom(sock_fd, buffer, sizeof(buffer), 0, (struct sockaddr*)&src_address, &address_len) == -1){
+void NetworkHandler::sendDatagram(ProtocolPacket packet, sockaddr_in dest_address, int sock_fd){
+	if(sendto(sock_fd, &packet, sizeof(packet), 0, (struct sockaddr *) &dest_address, sizeof(dest_address)) == -1){
 
-        }
-        printf("Received packet from %s:%d\nData: %s\n\n",
-        		inet_ntoa(src_address.sin_addr), ntohs(src_address.sin_port), buffer);
-    }
+	}
 }
-
