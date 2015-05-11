@@ -3,7 +3,8 @@
 Sender::Sender(std::string filename, sockaddr_in dest_address){
 	this->file_descriptor = FileManager::openFile(filename, READ_F);
 	this->filename = filename;
-	this->src_address = src_address;
+	memcpy(&this->src_address, &dest_address, sizeof(dest_address));
+	this->prot_handler = new ProtocolHandler();
 
 	if(createSocket()){
 		bindSocket();
@@ -26,24 +27,12 @@ bool Sender::bindSocket() {
     return true;
 }
 
-void Sender:: startListen(sockaddr_in src_address, int sock_fd){
-	socklen_t address_len = sizeof(src_address);
-    while(1)
-    {
-        if (recvfrom(sock_fd, &received_packet, sizeof(ProtocolPacket), 0, (struct sockaddr*)&src_address, &address_len) == -1){
-
-        }
-        //receiveDatagram(buffer, src_address);
-        /*printf("Received packet from %s:%d\nData: %s\n\n",
-        		inet_ntoa(src_address.sin_addr), ntohs(src_address.sin_port), buffer);*/
-    }
-}
 
 void Sender:: receiveDatagram(char* buffer, int buff_len,  sockaddr_in src_address){
 	ProtocolPacket packet = prot_handler->interpretDatagram(buffer, strlen(buffer));
 
     if(prot_handler->isACK(packet) == ACK){
-    	handleACKPacket(packet);
+    	handleACKPacket(packet, src_address);
     }
 }
 
@@ -52,15 +41,23 @@ void* Sender:: run(void* req){
 	Sender* sender = new Sender(arg->file_name, arg->dest_address);
 	FileManager::readFile(sender->file_descriptor, sender->data_buffer, sizeof(data_buffer));
 
+	ProtocolPacket packet = sender->prot_handler->prepareDATA(++(sender->current_pacekt), DATA_MAX_SIZE, sender->data_buffer, sizeof(data_buffer));
+	sender->sendDatagram(packet, sender->src_address, sender->sock_fd);
+
+	sender->startListen(sender->my_address, sender->sock_fd, sender);
 	return (void*)0;
 }
 
-void Sender:: handleACKPacket(ProtocolPacket rd){
+void Sender:: handleACKPacket(ProtocolPacket rd, sockaddr_in src_address){
 	FileManager::readFile(this->file_descriptor, this->data_buffer, sizeof(data_buffer));
 
+	ProtocolPacket packet = prot_handler->prepareDATA(++(this->current_pacekt), DATA_MAX_SIZE,this->data_buffer, sizeof(data_buffer));
+
+	sendDatagram(packet, src_address, sock_fd);
 }
 
-void Sender:: handleERRPacket(ProtocolPacket rd){
+
+void Sender:: handleERRPacket(ProtocolPacket rd, sockaddr_in src_address){
 
 }
 

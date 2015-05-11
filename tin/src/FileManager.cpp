@@ -5,6 +5,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <cerrno>
+#include <iostream>
 
 /*
 Tworzy pusty plik o nazwie 'filename' w katalogu "Resources" i otwiera go do zapisu.
@@ -23,8 +25,10 @@ Zwraca true, gdy istnieje; false w p.p.
 */
 bool FileManager::checkFile(std::string filename) {
 	int fd = openFile(filename, READ_F);
-	if (fd < 0)
+	if (fd < 0){
+		printf("Problem z otwarciem pliku");
 		return false;
+}
 	if (close(fd) != 0)
 		return false; // ???
 	return true;
@@ -37,10 +41,11 @@ Zwraca deskryptor otwartego pliku, gdy udało się; -1 gdy błąd.
 int FileManager::openFile(std::string filename, int flag) {
 	std::string filepath = RESOURCES_DIR + filename;
 	int fd;
-	if (flag == READ_F)
+	if (flag == READ_F){
 		fd = open(filepath.c_str(), O_RDONLY);
+	}
 	else if (flag == WRITE_F)
-		fd = open(filepath.c_str(), O_WRONLY);
+		fd = open(filepath.c_str(), O_WRONLY | O_CREAT);
 	else
 		return -1;
 	return fd;

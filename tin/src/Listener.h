@@ -20,7 +20,6 @@ protected:
 	//odzidziczone funkcje wirtualne
 	virtual bool bindSocket();							
 	virtual void receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address);
-	virtual void startListen(sockaddr_in address, int sockfd);	
 
 
 public:

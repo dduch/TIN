@@ -42,27 +42,6 @@ bool Listener::bindSocket() {
 	return true;
 }
 
-/*
- *Rozpoczyna nasłuchiwanie na gniezdzie serwerowym
- */
-void Listener:: startListen(sockaddr_in src_address, int sock_fd){
-	socklen_t address_len = sizeof(src_address);
-    while(1)
-    {
-        if (recvfrom(sock_fd, &received_packet, sizeof(ProtocolPacket), 0, (struct sockaddr*)&src_address, &address_len) == -1){
-
-        }
-        else{
-            printf("Received packet from %s:%d\nData: %s\n\n",
-             		inet_ntoa(src_address.sin_addr), ntohs(src_address.sin_port), received_packet.filename);
-
-            char *buffer = new char[sizeof(ProtocolPacket)];
-            memcpy(buffer, &received_packet, sizeof(received_packet));
-
-            receiveDatagram(buffer, sizeof(received_packet), src_address);
-        }
-    }
-}
 
 void Listener:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address){
     ProtocolPacket packet = prot_handler->interpretDatagram(buffer, buff_len);
@@ -70,7 +49,7 @@ void Listener:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_addr
     if(prot_handler->isRQ(packet)){
     	handleRQPacket(packet,src_address);
     }
-    if(prot_handler->isRD(packet)){
+    else if(prot_handler->isRD(packet)){
     	handleRDPacket(packet,src_address);
     }
 }
@@ -86,8 +65,8 @@ void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address){
 void Listener::handleRDPacket(ProtocolPacket req, sockaddr_in src_address){
 	Arguments arguments;
 	std::string name (req.filename);
-	arguments.file_name = name.c_str();
-	arguments.dest_address = src_address;
+	memcpy(&arguments.file_name, &req.filename, MAX_FILENAME_SIZE);
+	memcpy(&arguments.dest_address, &src_address, sizeof(src_address));
 
     pthread_t tid;
     if (pthread_create(&tid, NULL, Sender::run, &arguments)) {
@@ -101,7 +80,7 @@ void* Listener:: run(void*){
 	Listener* listener = Listener::getInstance();
 	if(listener->createSocket() && listener->bindSocket())
 	{
-		listener->startListen(listener->src_address,listener->sock_fd);
+		listener->startListen(listener->src_address,listener->sock_fd, listener);
 	}
 
 	return (void*)true;

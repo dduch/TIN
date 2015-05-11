@@ -13,14 +13,17 @@
 //maksymalna wielkosc w bajtach pola danych w DATA:
 #define MAX_DATA_BLOCK_SIZE 4096
 
+//maksymalna długość nazwy pliku
+#define MAX_FILENAME_SIZE 50
+
 struct ProtocolPacket
 {
 	unsigned int type :4;			//typ pakietu: RQ, RESP, RD, DATA, ACK, ERR
 	unsigned int str_length :8;		//dlugosc nazwy pliku (RQ, RD)
 	unsigned int number :20;		//numer (bloku danych (DATA) | potwierdzenia otrzymania bloku danych (ACK) | bledu (ERR) )
 	unsigned int data_size :32;		//rozmiar (bloku danych w bajtach (DATA) | calkowity rozmiar pliku (RESP) )
-	char* filename;					//dla RQ, RD
-	char* data;						//dla DATA
+	char filename[MAX_FILENAME_SIZE];					//dla RQ, RD
+	char data[MAX_DATA_BLOCK_SIZE];						//dla DATA
 };
 
 class ProtocolHandler

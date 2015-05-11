@@ -11,7 +11,7 @@
 
 namespace FileManager {
 
-	const std::string RESOURCES_DIR = "Resources/";		// katalog z zasobami
+	const std::string RESOURCES_DIR = "/home/dawid/workspace/tin/Debug/Resources/";		// katalog z zasobami
 
 	int createFile(std::string filename);			// tworzenie pliku w RESOURCE_DIR do zapisu
 	bool checkFile(std::string filename);			// sprawdzanie czy plik istnieje w RESOURCE_DIR
