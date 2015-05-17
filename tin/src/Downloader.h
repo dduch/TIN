@@ -16,6 +16,8 @@ private:
 	bool is_RESP_received = false;								// czy odebrano jakikolwiek pakiet RESP
 	struct sockaddr_in broadcast_address;		    			// adres broadcastowy, na który należy wysłać żądanie
 
+	int transferID;			// id transferu pobierania
+
 	bool sendBroadcast(std::string filename);					// wyślij żądanie udostępnienia pliku do wszystkich węzłów
 	bool connectInit();											// zainicjuj połączenie
 
@@ -42,7 +44,7 @@ private:
 	virtual void receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address);
 
 public:
-	Downloader(std::string filename);
+	Downloader(std::string filename, int transferID);
 	~Downloader();
 	/*
 	 * statyczna metoda uruchamiana  jako metoda startowa w nowym wątku

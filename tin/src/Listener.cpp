@@ -9,7 +9,7 @@ Listener:: Listener(){
 }
 
 Listener:: ~Listener(){
-	std::cout<<"destruktor";
+	//std::cout<<"destruktor";
 	closeSocket(sock_fd);
 }
 
@@ -52,19 +52,27 @@ void Listener:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_addr
     else if(prot_handler->isRD(packet)){
     	handleRDPacket(packet,src_address);
     }
+	else {
+		printf("Listener: dostalem cos innego niz RQ i RD.\n");
+	}
 }
 
 void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address){
 	std::string file_name(req.filename);
 	if(FileManager::checkFile(file_name)){
-		ProtocolPacket packet = prot_handler->prepareRESP(0);
-		sendDatagram(packet,src_address, sock_fd);
+		int file_size = FileManager::getFileSize(file_name);
+		std::cout << "handleRQPacket: filesize = " << file_size << std::endl;
+		if (file_size > 0)
+		{
+			ProtocolPacket packet = prot_handler->prepareRESP(file_size);
+			sendDatagram(packet,src_address, sock_fd);
+		}
 	}
 }
 
 void Listener::handleRDPacket(ProtocolPacket req, sockaddr_in src_address){
 	Arguments arguments;
-	std::string name (req.filename);
+	//std::string name (req.filename);
 	memcpy(&arguments.file_name, &req.filename, MAX_FILENAME_SIZE);
 	memcpy(&arguments.dest_address, &src_address, sizeof(src_address));
 

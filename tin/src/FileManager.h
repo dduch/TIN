@@ -11,7 +11,7 @@
 
 namespace FileManager {
 
-	const std::string RESOURCES_DIR = "/home/dawid/workspace/tin/Debug/Resources/";		// katalog z zasobami
+	const std::string RESOURCES_DIR = "Resources/";		// katalog z zasobami
 
 	int createFile(std::string filename);			// tworzenie pliku w RESOURCE_DIR do zapisu
 	bool checkFile(std::string filename);			// sprawdzanie czy plik istnieje w RESOURCE_DIR
@@ -19,7 +19,7 @@ namespace FileManager {
 	bool closeFile(int fd);					// zamkniecie otwartego pliku
 	size_t readFile(int fd, void *buf, size_t buflen);	// czytanie z otwartego pliku
 	size_t appendFile(int fd, void *buf, size_t buflen);	// pisanie do otwartego pliku
-	int getFileSize(int fd);				// odczytanie wielkosci pliku w bajtach
+	int getFileSize(std::string filename);			// odczytanie wielkosci pliku w bajtach
 };
 
 #endif

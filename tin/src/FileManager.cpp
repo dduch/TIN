@@ -25,10 +25,9 @@ Zwraca true, gdy istnieje; false w p.p.
 */
 bool FileManager::checkFile(std::string filename) {
 	int fd = openFile(filename, READ_F);
-	if (fd < 0){
-		printf("Problem z otwarciem pliku");
+	if (fd < 0) {
 		return false;
-}
+	}
 	if (close(fd) != 0)
 		return false; // ???
 	return true;
@@ -41,11 +40,11 @@ Zwraca deskryptor otwartego pliku, gdy udało się; -1 gdy błąd.
 int FileManager::openFile(std::string filename, int flag) {
 	std::string filepath = RESOURCES_DIR + filename;
 	int fd;
-	if (flag == READ_F){
+	if (flag == READ_F) {
 		fd = open(filepath.c_str(), O_RDONLY);
 	}
 	else if (flag == WRITE_F)
-		fd = open(filepath.c_str(), O_WRONLY | O_CREAT);
+		fd = open(filepath.c_str(), O_WRONLY);
 	else
 		return -1;
 	return fd;
@@ -109,13 +108,26 @@ Zwraca:
 - -1 gdy nastąpi błąd inny od EBADF i EINVAL (patrz: errno)
 - -2 gdy nastąpi błąd EBADF lub EINVAL (nieprawidłowy deskryptor lub plik nie jest otwarty do pisania)
 */
-int FileManager::getFileSize(int fd) {
-	int bytes = lseek(fd, 0, SEEK_END);
-	if (bytes < 0) {
-		if (errno == EBADF || errno == EINVAL)
-			return -2;
-		else
-			return -1;
+int FileManager::getFileSize(std::string filename) {
+	int fd = openFile(filename, READ_F);
+
+	if(fd < 0)
+	{
+		return -1;
 	}
-	return bytes;
+	else{
+		int bytes = lseek(fd, 0, SEEK_END);
+		if (bytes < 0) {
+			if (errno == EBADF || errno == EINVAL) {
+				close(fd);
+				return -2;
+			}
+			else {
+				close(fd);
+				return -1;
+			}
+		}
+		close(fd);
+		return bytes;
+	}
 }

@@ -10,7 +10,8 @@ struct ProtocolPacket ProtocolHandler::prepareDATA(unsigned int data_number, uns
 {
 	struct ProtocolPacket data_packet;
 	//data_packet.data = new char[MAX_DATA_BLOCK_SIZE];
-	strncpy(data_packet.data, data, size_of_data);
+	//strncpy(data_packet.data, data, size_of_data);
+	memcpy(data_packet.data, data, size_of_data);
 	//data_number do 20 bitow, data_data_size do 12 bitow, size_of_data do 1024*32, inaczej WTF
 	//data_packet.type = (data_number < 1048576 && data_data_size < 4096 && size_of_data < 1024*32)? DATA : WTF;
 	data_packet.type = DATA;

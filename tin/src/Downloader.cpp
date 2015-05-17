@@ -1,19 +1,25 @@
 #include "Downloader.h"
 #include <iostream>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 /*
  * Tworzy obiekt downloadera, ustawia pola: pole z nazwą pliku, będącego podmiotem transferu
  * oraz pole ze wskaźnikiem na obiekt Protocol Handlera
  */
-Downloader:: Downloader(std::string filename) {
+Downloader:: Downloader(std::string filename, int transferID) {
 	this->filename = filename;
 	this->prot_handler = new ProtocolHandler();
+	this->transferID = transferID;
+	logger = new Logger(filename, pthread_self());
 }
 
 /*
  * Zamknij gniazdo i skojarzony port
  */
 Downloader:: ~Downloader() {
+	//FileManager::closeFile(this->file_descriptor);
 	closeSocket(sock_fd);
 }
 
@@ -40,7 +46,12 @@ bool Downloader::bindSocket() {
  * żądanie wysyłane na adres broadcastowy oraz na ustalony arbitralnie port serwerowy
  */
 bool Downloader:: connectInit(){
+
+	/*struct hostent *hp, *gethostbyname(const char *name);
+ 	hp = gethostbyname("25.255.255.255"); 
+
 	bzero(&broadcast_address, sizeof(broadcast_address));
+	memcpy((char *) &broadcast_address.sin_addr, (char *) hp->h_addr, hp->h_length);*/
 	broadcast_address.sin_family = AF_INET;
 	broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 	broadcast_address.sin_port = htons(SERVER_PORT);
@@ -55,7 +66,7 @@ bool Downloader:: sendBroadcast(std::string filename){
 	ProtocolPacket req_packet = prot_handler->prepareRQ(strlen(filename.c_str()) + 1, filename.c_str(), strlen(filename.c_str()) +1 );
 
 	if(sendto(this->sock_fd, &req_packet, sizeof(req_packet), 0, (struct sockaddr *) &broadcast_address, sizeof(broadcast_address)) == -1){
-		std::cout<<"nie wysłano";
+		std::cout<<"broadcast: nie wysłano\n";
 		return false;
 	}
 	return true;
@@ -66,7 +77,8 @@ bool Downloader:: sendBroadcast(std::string filename){
  * wiadomość w postaci struktury. W zależności od typu otrzymanej wiadomości
  */
 void Downloader:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address){
-	ProtocolPacket packet = prot_handler->interpretDatagram(buffer, sizeof(buffer));
+	//ProtocolPacket packet = prot_handler->interpretDatagram(buffer, sizeof(buffer));
+	ProtocolPacket packet = prot_handler->interpretDatagram(buffer, buff_len);
 
     if(prot_handler->isRESP(packet)){
     	handleRESPPacket(packet, src_address);
@@ -83,11 +95,13 @@ void Downloader:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_ad
  * odpowiedzi.
  */
 void* Downloader:: run(void* req){
+	int transferID = *(int*)req;
+
 	std::string filename;
 	std::string& file_ref = filename;
 
-	RunningTasks::getIstance().checkFileName(*(int*)req, file_ref);
-	Downloader* downloader = new Downloader(filename);
+	RunningTasks::getIstance().checkFileName(transferID, file_ref);
+	Downloader* downloader = new Downloader(filename, transferID);
 
 	if(downloader->createSocket() && downloader->bindSocket() && downloader->connectInit()){
 		if(downloader->sendBroadcast(filename)){
@@ -113,12 +127,20 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
 	}
 
 	this->is_RESP_received = true;
-	this->file_descriptor = FileManager::openFile(this->filename, WRITE_F);
+	//this->file_descriptor = FileManager::openFile(this->filename, WRITE_F);
+	this->file_descriptor = FileManager::createFile(this->filename);
+	if (this->file_descriptor < 0) {
+		printf("Downloader::handleRESPPacket: blad stworzenia nowego pliku");
+		return;
+	}
+	this->file_size = resp_packet.data_size;
+
+	logger->logEvent(START_DOWNLOADING, INFO);
 
 	const char* file_name = filename.c_str();
 
 	ProtocolPacket packet = prot_handler->prepareRD(this->filename.length() + 1, file_name, this->filename.length() + 1);
-	sendDatagram(packet,src_address, sock_fd);
+	sendDatagram(packet, src_address, sock_fd);
 }
 
 /*
@@ -126,8 +148,17 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
  * zleca wysłanie go na adres skąd zostały odebrane dane.
  */
 void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_address){
-	FileManager::appendFile(this->file_descriptor,data_packet.data, strlen(data_packet.data));
+	if (data_packet.data_size == 0) {
+		FileManager::closeFile(this->file_descriptor);
+		RunningTasks::getIstance().freeTaskSlot(this->transferID);
+		logger->logEvent(FINISH_RECEIVING,INFO);
+		printf("Zakonczenie downloadera.\n");
+	} else {
+		int bytes = FileManager::appendFile(this->file_descriptor, data_packet.data, sizeof(data_packet.data));
+		std::cout << "Downloader::handleDATA: zapisano bajtow: " << bytes << std::endl;
+	}
 
-	ProtocolPacket packet = prot_handler->prepareACK(this->current_pacekt +1);
+	ProtocolPacket packet = prot_handler->prepareACK(++current_pacekt);
+	logger->logEvent(RECEIVED_DATA + std::to_string(current_pacekt), INFO);
 	sendDatagram(packet, src_address, sock_fd);
 }

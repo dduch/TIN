@@ -1,7 +1,6 @@
-#include <cstdlib>
+//#include <cstdlib>
 #include <iostream>
-#include <iostream>
-#include <cstdlib>
+#include <pthread.h>
 #include "UI.h"
 #include "Listener.h"
 #include "RunningTasks.h"
@@ -12,7 +11,8 @@ int main(){
     if(pthread_create(&listnerId, NULL, Listener::run,NULL) != 0)
     {
         std::cout << "Error while initializing thread\n";
-        std::exit(-1);
+        //std::exit(-1);
+	return -1;
     }
 
     RunningTasks::setMaxTask(3); // Okreslamy max liczbe obslugiwanych downloaderow
@@ -20,6 +20,8 @@ int main(){
     UI userUI;
     userUI.run();
   
-    std::exit(0);
+    //std::exit(0);
     //pthread_exit(NULL);
+	pthread_join(listnerId, NULL);
+	return 0;
 }

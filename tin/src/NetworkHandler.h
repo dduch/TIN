@@ -1,5 +1,6 @@
 #ifndef NETWORKHANDLER_H_
 #define NETWORKHANDLER_H_
+#include <sys/types.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -8,6 +9,7 @@
 #include <pthread.h>
 #include "ProtocolHandler.h"
 #include "FileManager.h"
+#include "Logger.h"
 
 //Arbitralnie przydzielony port obiektom Listenere
 #define SERVER_PORT 9055
@@ -26,10 +28,12 @@ protected:
 	//Pola niezbędne do transferu pliku
 	ProtocolPacket received_packet;					// bufor  na obierane wiadomości
 	ProtocolHandler* prot_handler;					// wskazanie na obiekt kontrolujacy poprawnosc protokolu
+	Logger* logger;								 	// wsakazanie na obiekt logera
 	struct sockaddr_in my_address;					// sieciowy adres dla danego obiektu
 	struct sockaddr_in src_address;					// sieciowy adres zrodlowy - skad przyszedl pakiet
 	int sock_fd;									// deskryptor gniazda
 	int my_port;									// port dla danego obiektu sieciowego
+	int file_size;									// rozmiar przesyłanego pliku w bajtach
 	int file_descriptor;							// dekryptor pliku, którego transfer dotyczy
 	unsigned int current_pacekt = 0x00000;			// aktualna wartość otrzymanego/wsyłanego pakietu
 	std::string filename;							// nazwa pliku, którego transfer dotyczy
