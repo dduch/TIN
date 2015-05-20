@@ -56,8 +56,10 @@ void* Sender:: run(void* req){
 		// ???
 	}
 
-	sender->sendDatagram(packet, sender->src_address, sender->sock_fd);
-	sender->logger->logEvent(SENT_DATA + std::to_string(sender->current_pacekt), INFO);
+	std::string log_msg = SENT_DATA + std::to_string(sender->current_pacekt);
+
+	sender->sendDatagram(packet, sender->src_address, sender, log_msg);
+
 	if (!end) {
 		sender->startListen(sender->my_address, sender->sock_fd, sender);
 		sender->logger->logEvent(FINISH_SENDING, INFO);
@@ -71,18 +73,20 @@ void Sender:: handleACKPacket(ProtocolPacket rd, sockaddr_in src_address){
 	std::cout << "Sender::handleACK: odczytalem bajtow: " << bytes << std::endl;
 	ProtocolPacket packet;
 	if (bytes > 0) {
-		packet = prot_handler->prepareDATA(++current_pacekt, DATA_MAX_SIZE, this->data_buffer, sizeof(data_buffer));
+		packet = prot_handler->prepareDATA(++current_pacekt, bytes, this->data_buffer, bytes);
 	}
 	else if(bytes == 0) {
 		// Przygotuj pusty pakiet i zakoncz transfer:
-		packet = prot_handler->prepareDATA(++current_pacekt, DATA_MAX_SIZE, this->data_buffer, 0);
+		packet = prot_handler->prepareDATA(++current_pacekt, bytes, this->data_buffer, 0);
 		FileManager::closeFile(this->file_descriptor);
 	} else {
 		printf("Sender::handleACK: Blad odczytu danych.");
 		return;
 	}
 
-	sendDatagram(packet, src_address, sock_fd);
+	logger->logEvent(ACK_RECEIVED ,INFO);
+	std::string log_msg = SENT_DATA + std::to_string(current_pacekt);
+	sendDatagram(packet, src_address, this, log_msg);
 }
 
 

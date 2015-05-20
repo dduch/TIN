@@ -135,12 +135,11 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
 	}
 	this->file_size = resp_packet.data_size;
 
-	logger->logEvent(START_DOWNLOADING, INFO);
-
 	const char* file_name = filename.c_str();
 
 	ProtocolPacket packet = prot_handler->prepareRD(this->filename.length() + 1, file_name, this->filename.length() + 1);
-	sendDatagram(packet, src_address, sock_fd);
+
+	sendDatagram(packet, src_address, this, START_DOWNLOADING);
 }
 
 /*
@@ -153,12 +152,12 @@ void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_a
 		RunningTasks::getIstance().freeTaskSlot(this->transferID);
 		logger->logEvent(FINISH_RECEIVING,INFO);
 		printf("Zakonczenie downloadera.\n");
+		return;
 	} else {
-		int bytes = FileManager::appendFile(this->file_descriptor, data_packet.data, sizeof(data_packet.data));
+		int bytes = FileManager::appendFile(this->file_descriptor, data_packet.data, data_packet.data_size);
 		std::cout << "Downloader::handleDATA: zapisano bajtow: " << bytes << std::endl;
 	}
 
 	ProtocolPacket packet = prot_handler->prepareACK(++current_pacekt);
-	logger->logEvent(RECEIVED_DATA + std::to_string(current_pacekt), INFO);
-	sendDatagram(packet, src_address, sock_fd);
+	sendDatagram(packet, src_address, this, RECEIVED_DATA + std::to_string(current_pacekt));
 }

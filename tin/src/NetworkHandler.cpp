@@ -57,8 +57,13 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
 /*
  * Wysyła podany pakiet na wskazany adres
  */
-void NetworkHandler::sendDatagram(ProtocolPacket packet, sockaddr_in dest_address, int sock_fd){
-	if(sendto(sock_fd, &packet, sizeof(packet), 0, (struct sockaddr *) &dest_address, sizeof(dest_address)) == -1){
+void NetworkHandler::sendDatagram(ProtocolPacket packet, sockaddr_in dest_address, NetworkHandler* object, std::string log_msg){
+	if(sendto(object->sock_fd, &packet, sizeof(packet), 0, (struct sockaddr *) &dest_address, sizeof(dest_address)) == -1){
 
 	}
+
+	if(log_msg.length() > 0){
+		object->logger->logEvent(log_msg, INFO);
+	}
+
 }

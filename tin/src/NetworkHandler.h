@@ -53,7 +53,7 @@ protected:
 	/*
 	 * Wysyła podany jako argument pakiet, na odpowiedzni adres
 	 */
-	void sendDatagram(ProtocolPacket packet, sockaddr_in dest_address, int sock_fd);
+	void sendDatagram(ProtocolPacket packet, sockaddr_in dest_address, NetworkHandler* object, std::string log_msg);
 	/*
 	 * Rozpoczyna nałuchiwanie na wskazanym gnieździe, danego obiektu.
 	 * Wszystkie obiekty klas potomnych muszą realizować takie samo nasłuchiwanie, dlatego

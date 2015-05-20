@@ -20,6 +20,7 @@ const std::string SENT_DATA = "Wysłano pakiet z danymi o numerze ";
 const std::string RECEIVED_DATA = "Odebrano pakiet z danymi o numerze ";
 const std::string FINISH_RECEIVING = "Zakończono odbieranie pliku ";
 const std::string FINISH_SENDING = "Zakończono wysyłanie pliku ";
+const std::string ACK_RECEIVED = "Odebrano potwierdzenie odbioru pakietu DATA ";
 
 /*
  * Typowe prefixy kominikatów
