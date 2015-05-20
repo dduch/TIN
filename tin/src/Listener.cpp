@@ -88,9 +88,27 @@ void* Listener:: run(void*){
 	Listener* listener = Listener::getInstance();
 	if(listener->createSocket() && listener->bindSocket())
 	{
-		listener->startListen(listener->src_address,listener->sock_fd, listener);
+		listener->startListen(listener->src_address,listener->sock_fd);
 	}
 
 	return (void*)true;
 }
 
+
+void Listener:: startListen(sockaddr_in src_address, int sock_fd){
+	socklen_t address_len = sizeof(src_address);
+    while(1)
+    {
+        if (recvfrom(sock_fd, &received_packet, sizeof(ProtocolPacket), 0, (struct sockaddr*)&src_address, &address_len) == -1){
+
+        }
+        else{
+            printf("Received packet from %s:%d\nData: %d\n\n",
+             		inet_ntoa(src_address.sin_addr), ntohs(src_address.sin_port), received_packet.type);
+            char *buffer = new char[sizeof(ProtocolPacket)];
+            memcpy(buffer, &received_packet, sizeof(received_packet));
+
+            receiveDatagram(buffer, sizeof(received_packet), src_address);
+        }
+    }
+}

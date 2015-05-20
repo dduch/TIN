@@ -17,6 +17,16 @@
 // Maksymalny rozmiar pakietu danych
 #define DATA_MAX_SIZE 4096
 
+// Wartości timeout dla oczekiwania na zadany pakiet
+#define RESP_TO 10
+#define READ_TO	10
+#define DATA_TO 5
+#define ACK_TO  2
+
+
+// Wartość czasu, po upływie którego transmisja kończy się niepowodzeniem
+#define CRITICAL_TO 20
+
 /*
  * Klasa abstrakcyjna, udostępniająca insterfejs sieciowy klasom: Downloader, Listener oraz Sender
  * Zadania: tworzenia nowego gniazda, zamykanie gniazda, wysyłanie datagramu, nasłuchiwanie na nadchodzące
@@ -27,6 +37,7 @@ class NetworkHandler {
 protected:
 	//Pola niezbędne do transferu pliku
 	ProtocolPacket received_packet;					// bufor  na obierane wiadomości
+	ProtocolPacket last_packet;						// ostatnio wysłany pakiet - na wypadek retransmisji
 	ProtocolHandler* prot_handler;					// wskazanie na obiekt kontrolujacy poprawnosc protokolu
 	Logger* logger;								 	// wsakazanie na obiekt logera
 	struct sockaddr_in my_address;					// sieciowy adres dla danego obiektu
@@ -37,7 +48,6 @@ protected:
 	int file_descriptor;							// dekryptor pliku, którego transfer dotyczy
 	unsigned int current_pacekt = 0x00000;			// aktualna wartość otrzymanego/wsyłanego pakietu
 	std::string filename;							// nazwa pliku, którego transfer dotyczy
-
 
 	/*
 	*Funkcje, których implementacja jest niezmienna dla obiektów pochodnych
@@ -60,6 +70,10 @@ protected:
 	 * funkcja znalazła się w nadrzdnej klasie abstrakcyjnej
 	 */
 	virtual void startListen(sockaddr_in address, int sockfd, NetworkHandler* object);
+	/*
+	 * 	Dokonuje retransmisji ostatnio wysyłanego pakietu
+	 */
+	virtual void repeatSending(NetworkHandler* object);
 
 	/*
 	 * Funkcje których implementacja różni się w obiektach pochodnych
@@ -69,6 +83,10 @@ protected:
 	virtual void receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address) = 0;
 
 public:
+	time_t start_waiting;
+	time_t start_critical_waiting;
+	int timeout_type;
+
 	/*
 	 * Statyczna metoda startowa dla obiektów pochodnych uruchamianych w nowych wątkach
 	 */

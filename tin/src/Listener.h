@@ -13,6 +13,7 @@ private:
 	Listener();												// prywatny konstruktor
 	static Listener* instance;										// statyczny wskaźnik do instancji klasy
 
+	 void startListen(sockaddr_in src_address, int sock_fd);
 protected:
 	void handleRQPacket(ProtocolPacket req, sockaddr_in src_address);
 	void handleRDPacket(ProtocolPacket req, sockaddr_in src_address);

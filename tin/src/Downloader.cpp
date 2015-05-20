@@ -47,13 +47,13 @@ bool Downloader::bindSocket() {
  */
 bool Downloader:: connectInit(){
 
-	/*struct hostent *hp, *gethostbyname(const char *name);
+	struct hostent *hp, *gethostbyname(const char *name);
  	hp = gethostbyname("25.255.255.255"); 
 
 	bzero(&broadcast_address, sizeof(broadcast_address));
-	memcpy((char *) &broadcast_address.sin_addr, (char *) hp->h_addr, hp->h_length);*/
+	memcpy((char *) &broadcast_address.sin_addr, (char *) hp->h_addr, hp->h_length);
 	broadcast_address.sin_family = AF_INET;
-	broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+	//broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 	broadcast_address.sin_port = htons(SERVER_PORT);
 
 	return true;
@@ -64,6 +64,7 @@ bool Downloader:: connectInit(){
  */
 bool Downloader:: sendBroadcast(std::string filename){
 	ProtocolPacket req_packet = prot_handler->prepareRQ(strlen(filename.c_str()) + 1, filename.c_str(), strlen(filename.c_str()) +1 );
+	memcpy(&last_packet, &req_packet, sizeof(req_packet));
 
 	if(sendto(this->sock_fd, &req_packet, sizeof(req_packet), 0, (struct sockaddr *) &broadcast_address, sizeof(broadcast_address)) == -1){
 		std::cout<<"broadcast: nie wysłano\n";
@@ -107,6 +108,10 @@ void* Downloader:: run(void* req){
 		if(downloader->sendBroadcast(filename)){
 			int off = 1;
 			setsockopt(downloader->sock_fd, SOL_SOCKET, SO_BROADCAST, &(off), sizeof(off));
+
+			downloader->start_critical_waiting = time(NULL);
+			downloader->start_waiting = time(NULL);
+			downloader->timeout_type = RESP_TO;
 			downloader->startListen(downloader->my_address, downloader->sock_fd, downloader);
 		}
 	}
@@ -139,6 +144,8 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
 
 	ProtocolPacket packet = prot_handler->prepareRD(this->filename.length() + 1, file_name, this->filename.length() + 1);
 
+	start_critical_waiting = time(NULL);
+	timeout_type = DATA_TO;
 	sendDatagram(packet, src_address, this, START_DOWNLOADING);
 }
 
@@ -159,5 +166,8 @@ void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_a
 	}
 
 	ProtocolPacket packet = prot_handler->prepareACK(++current_pacekt);
+
+	start_critical_waiting = time(NULL);
+	timeout_type = DATA_TO;
 	sendDatagram(packet, src_address, this, RECEIVED_DATA + std::to_string(current_pacekt));
 }

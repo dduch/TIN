@@ -38,8 +38,19 @@ void NetworkHandler:: closeSocket(int socket){
  */
 void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkHandler* object){
 	socklen_t address_len = sizeof(src_address);
+	fcntl(sock_fd, F_SETFL, O_NONBLOCK);
+
     while(1)
     {
+    	if(object->start_critical_waiting != 0 && (time(NULL) - object->start_critical_waiting) > CRITICAL_TO){
+    		object->logger->logEvent(CRITICAL_TO_ERROR, ERROR);
+    		return;
+    	}
+
+    	if(object->start_waiting != 0 && (time(NULL) - object->start_waiting) > object-> timeout_type){
+    		repeatSending(object);
+		}
+
         if (recvfrom(sock_fd, &received_packet, sizeof(ProtocolPacket), 0, (struct sockaddr*)&src_address, &address_len) == -1){
 
         }
@@ -49,6 +60,8 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
             char *buffer = new char[sizeof(ProtocolPacket)];
             memcpy(buffer, &received_packet, sizeof(received_packet));
 
+            object->start_critical_waiting = 0;
+            object->start_waiting = 0;
             object->receiveDatagram(buffer, sizeof(received_packet), src_address);
         }
     }
@@ -58,12 +71,27 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
  * Wysyła podany pakiet na wskazany adres
  */
 void NetworkHandler::sendDatagram(ProtocolPacket packet, sockaddr_in dest_address, NetworkHandler* object, std::string log_msg){
+
+	memcpy(&last_packet, &packet, sizeof(packet));
+	object->start_waiting = time(NULL);
+
 	if(sendto(object->sock_fd, &packet, sizeof(packet), 0, (struct sockaddr *) &dest_address, sizeof(dest_address)) == -1){
 
 	}
 
-	if(log_msg.length() > 0){
+	if(log_msg.length() > 0 && log_msg != RETRANSMISION){
 		object->logger->logEvent(log_msg, INFO);
 	}
-
+	else if(log_msg.length() > 0 && log_msg == RETRANSMISION){
+		object->logger->logEvent(log_msg, WARNING);
+	}
 }
+
+void NetworkHandler:: repeatSending(NetworkHandler* object)
+{
+	std::string log_msg = RETRANSMISION;
+
+	sendDatagram(object->last_packet, object->src_address, object, log_msg);
+}
+
+

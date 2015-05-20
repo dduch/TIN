@@ -31,7 +31,7 @@ bool Sender::bindSocket() {
 
 
 void Sender:: receiveDatagram(char* buffer, int buff_len,  sockaddr_in src_address){
-	ProtocolPacket packet = prot_handler->interpretDatagram(buffer, strlen(buffer));
+	ProtocolPacket packet = prot_handler->interpretDatagram(buffer, buff_len);
 	//ProtocolPacket packet = prot_handler->interpretDatagram(buffer, buff_len);
 
     if(prot_handler->isACK(packet)){
@@ -58,6 +58,9 @@ void* Sender:: run(void* req){
 
 	std::string log_msg = SENT_DATA + std::to_string(sender->current_pacekt);
 
+	memcpy(&sender->last_packet, &packet, sizeof(packet));
+	sender->timeout_type = ACK_TO;
+	sender->start_critical_waiting = time(NULL);
 	sender->sendDatagram(packet, sender->src_address, sender, log_msg);
 
 	if (!end) {
@@ -86,6 +89,8 @@ void Sender:: handleACKPacket(ProtocolPacket rd, sockaddr_in src_address){
 
 	logger->logEvent(ACK_RECEIVED ,INFO);
 	std::string log_msg = SENT_DATA + std::to_string(current_pacekt);
+	timeout_type = ACK_TO;
+	start_critical_waiting = time(NULL);
 	sendDatagram(packet, src_address, this, log_msg);
 }
 

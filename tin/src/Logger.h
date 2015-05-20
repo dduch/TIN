@@ -21,12 +21,13 @@ const std::string RECEIVED_DATA = "Odebrano pakiet z danymi o numerze ";
 const std::string FINISH_RECEIVING = "Zakończono odbieranie pliku ";
 const std::string FINISH_SENDING = "Zakończono wysyłanie pliku ";
 const std::string ACK_RECEIVED = "Odebrano potwierdzenie odbioru pakietu DATA ";
-
+const std::string RETRANSMISION = "Retransmisja pakietu";
+const std::string CRITICAL_TO_ERROR = "Wystąpił krytyczny time - out, transfer zakończony niepowodzeniem";
 /*
  * Typowe prefixy kominikatów
 */
 const std::string INFO = "INFO: ";
-const std::string WARNING = "INFO: ";
+const std::string WARNING = "WARNING: ";
 const std::string ERROR = "ERROR: ";
 
 class Logger{
