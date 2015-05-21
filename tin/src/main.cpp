@@ -1,4 +1,4 @@
-//#include <cstdlib>
+#include <cstdlib>
 #include <iostream>
 #include <pthread.h>
 #include "UI.h"
@@ -20,8 +20,8 @@ int main(){
     UI userUI;
     userUI.run();
   
-    //std::exit(0);
+    std::exit(0);
     //pthread_exit(NULL);
-	pthread_join(listnerId, NULL);
+	//pthread_join(listnerId, NULL);
 	return 0;
 }

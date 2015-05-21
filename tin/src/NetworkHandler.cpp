@@ -44,6 +44,7 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
     {
     	if(object->start_critical_waiting != 0 && (time(NULL) - object->start_critical_waiting) > CRITICAL_TO){
     		object->logger->logEvent(CRITICAL_TO_ERROR, ERROR);
+    		object->is_crit_to = true;
     		return;
     	}
 
@@ -55,8 +56,6 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
 
         }
         else{
-            printf("Received packet from %s:%d\nData: %d\n\n",
-             		inet_ntoa(src_address.sin_addr), ntohs(src_address.sin_port), received_packet.type);
             char *buffer = new char[sizeof(ProtocolPacket)];
             memcpy(buffer, &received_packet, sizeof(received_packet));
 

@@ -9,7 +9,6 @@ Listener:: Listener(){
 }
 
 Listener:: ~Listener(){
-	//std::cout<<"destruktor";
 	closeSocket(sock_fd);
 }
 
@@ -61,7 +60,6 @@ void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address){
 	std::string file_name(req.filename);
 	if(FileManager::checkFile(file_name)){
 		int file_size = FileManager::getFileSize(file_name);
-		std::cout << "handleRQPacket: filesize = " << file_size << std::endl;
 		if (file_size > 0)
 		{
 			ProtocolPacket packet = prot_handler->prepareRESP(file_size);
@@ -72,7 +70,6 @@ void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address){
 
 void Listener::handleRDPacket(ProtocolPacket req, sockaddr_in src_address){
 	Arguments arguments;
-	//std::string name (req.filename);
 	memcpy(&arguments.file_name, &req.filename, MAX_FILENAME_SIZE);
 	memcpy(&arguments.dest_address, &src_address, sizeof(src_address));
 
@@ -103,8 +100,6 @@ void Listener:: startListen(sockaddr_in src_address, int sock_fd){
 
         }
         else{
-            printf("Received packet from %s:%d\nData: %d\n\n",
-             		inet_ntoa(src_address.sin_addr), ntohs(src_address.sin_port), received_packet.type);
             char *buffer = new char[sizeof(ProtocolPacket)];
             memcpy(buffer, &received_packet, sizeof(received_packet));
 

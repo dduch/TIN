@@ -23,6 +23,9 @@ const std::string FINISH_SENDING = "Zakończono wysyłanie pliku ";
 const std::string ACK_RECEIVED = "Odebrano potwierdzenie odbioru pakietu DATA ";
 const std::string RETRANSMISION = "Retransmisja pakietu";
 const std::string CRITICAL_TO_ERROR = "Wystąpił krytyczny time - out, transfer zakończony niepowodzeniem";
+const std::string FILE_READING_ERROR = "Problem z przygotowaniem pakietu, transfer zakończony niepowodzeniem";
+
+
 /*
  * Typowe prefixy kominikatów
 */

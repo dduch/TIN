@@ -44,12 +44,14 @@ private:
 	virtual void receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address);
 
 public:
+	int received_data;
 	Downloader(std::string filename, int transferID);
 	~Downloader();
 	/*
 	 * statyczna metoda uruchamiana  jako metoda startowa w nowym wątku
 	 */
 	static void* run(void*);
+
 };
 
 #endif

@@ -86,6 +86,7 @@ public:
 	time_t start_waiting;
 	time_t start_critical_waiting;
 	int timeout_type;
+	bool is_crit_to = false;
 
 	/*
 	 * Statyczna metoda startowa dla obiektów pochodnych uruchamianych w nowych wątkach

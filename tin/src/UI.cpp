@@ -20,6 +20,7 @@ const std::string MSG_STARTED_NEW_DOWNLOAD = "Commencing download: TransferID = 
 const std::string MSG_NO_RUNNING_TASK = "No running downloads";
 const std::string MSG_DOWNLOAD_STOP = "Stopping download ...";
 
+
 const std::string MSG_HELPINFO =    "Usage:\n\
     get FILE                - download FILE from remote server\n\
     show                    - show running transfers identificators\n\
@@ -183,18 +184,12 @@ void UI::startNewTransfer(){
         tmp.append(std::to_string(*newTransferID));
         tmp.append("\"");
 
-        // Odpalamy watek downloadera
-        //@todo: tutaj trzeba odpalic nowy watek
-        // (void*)newTransferID przekazywany jako argument
-        // Przyklad ponizej
-
         MessagePrinter::print(tmp);
         pthread_t tid;
 
         if (pthread_create(&tid, NULL, Downloader::run, newTransferID)) {
             MessagePrinter::print("Error while initializing thread");
         }
-        // Koniec przykladu testowego
     }
 }
 

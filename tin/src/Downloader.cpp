@@ -67,7 +67,6 @@ bool Downloader:: sendBroadcast(std::string filename){
 	memcpy(&last_packet, &req_packet, sizeof(req_packet));
 
 	if(sendto(this->sock_fd, &req_packet, sizeof(req_packet), 0, (struct sockaddr *) &broadcast_address, sizeof(broadcast_address)) == -1){
-		std::cout<<"broadcast: nie wysłano\n";
 		return false;
 	}
 	return true;
@@ -78,7 +77,6 @@ bool Downloader:: sendBroadcast(std::string filename){
  * wiadomość w postaci struktury. W zależności od typu otrzymanej wiadomości
  */
 void Downloader:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address){
-	//ProtocolPacket packet = prot_handler->interpretDatagram(buffer, sizeof(buffer));
 	ProtocolPacket packet = prot_handler->interpretDatagram(buffer, buff_len);
 
     if(prot_handler->isRESP(packet)){
@@ -106,13 +104,15 @@ void* Downloader:: run(void* req){
 
 	if(downloader->createSocket() && downloader->bindSocket() && downloader->connectInit()){
 		if(downloader->sendBroadcast(filename)){
-			int off = 1;
-			setsockopt(downloader->sock_fd, SOL_SOCKET, SO_BROADCAST, &(off), sizeof(off));
-
 			downloader->start_critical_waiting = time(NULL);
 			downloader->start_waiting = time(NULL);
 			downloader->timeout_type = RESP_TO;
 			downloader->startListen(downloader->my_address, downloader->sock_fd, downloader);
+
+			if(downloader->is_crit_to)
+			{
+				MessagePrinter::print("Downloading stopped - no such file. TransferID = " + std::to_string(transferID));
+			}
 		}
 	}
 	return (void*)0;
@@ -132,10 +132,8 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
 	}
 
 	this->is_RESP_received = true;
-	//this->file_descriptor = FileManager::openFile(this->filename, WRITE_F);
 	this->file_descriptor = FileManager::createFile(this->filename);
 	if (this->file_descriptor < 0) {
-		printf("Downloader::handleRESPPacket: blad stworzenia nowego pliku");
 		return;
 	}
 	this->file_size = resp_packet.data_size;
@@ -154,20 +152,37 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
  * zleca wysłanie go na adres skąd zostały odebrane dane.
  */
 void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_address){
-	if (data_packet.data_size == 0) {
-		FileManager::closeFile(this->file_descriptor);
-		RunningTasks::getIstance().freeTaskSlot(this->transferID);
-		logger->logEvent(FINISH_RECEIVING,INFO);
-		printf("Zakonczenie downloadera.\n");
-		return;
-	} else {
-		int bytes = FileManager::appendFile(this->file_descriptor, data_packet.data, data_packet.data_size);
-		std::cout << "Downloader::handleDATA: zapisano bajtow: " << bytes << std::endl;
-	}
+        bool lastData = false;
+        // ostatni blok DATA?
+        if (data_packet.data_size < MAX_DATA_BLOCK_SIZE)
+                lastData = true;
 
-	ProtocolPacket packet = prot_handler->prepareACK(++current_pacekt);
+        ProtocolPacket packet;
+        if (data_packet.number == current_pacekt+1) {
+            /*int bytes = */FileManager::appendFile(this->file_descriptor, data_packet.data, data_packet.data_size);
+            received_data += data_packet.data_size;
+            packet = prot_handler->prepareACK(++current_pacekt);
+        }
+        else{
+			packet = prot_handler->prepareACK(current_pacekt);	
+        	//repeatSending(this);
+        	//return;
+        }
 
-	start_critical_waiting = time(NULL);
-	timeout_type = DATA_TO;
-	sendDatagram(packet, src_address, this, RECEIVED_DATA + std::to_string(current_pacekt));
+
+        // jesli ostatni blok DATA => zamknij plik, loguj koniec, wyslij ACK, koncz watek:
+        if (lastData) {
+            FileManager::closeFile(this->file_descriptor);
+            RunningTasks::getIstance().freeTaskSlot(this->transferID);
+            sendDatagram(packet, src_address, this, RECEIVED_DATA + std::to_string(current_pacekt));
+            MessagePrinter::print("Download finished. TransferID: " + std::to_string(transferID));
+            logger->logEvent(FINISH_RECEIVING, INFO);
+            pthread_exit(NULL);
+        }
+        // w p.p. wyslij ACK i licz timeout, watek nadal trwa:
+        else {
+            start_critical_waiting = time(NULL);
+            timeout_type = DATA_TO;
+            sendDatagram(packet, src_address, this, RECEIVED_DATA + std::to_string(current_pacekt));
+        }
 }
