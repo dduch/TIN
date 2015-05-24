@@ -79,6 +79,7 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
             object->start_critical_waiting = 0;
             object->start_waiting = 0;
 
+            // skierowanie odebranego pakietu do dalszej obsługi
             object->receiveDatagram(buffer, sizeof(received_packet), src_address);
 
             delete buffer;

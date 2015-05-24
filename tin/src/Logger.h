@@ -43,6 +43,7 @@ public:
     //Konstruktor tworzy plik logu w folderze "log" aplikacji
     //Wynikowa nazwa pliku logu:
     //logfileName + logfileNumber(jeśli >= 0) + znacznik czasu
+    //caller - typ obiektu, dla którego tworzony jest skojarzony obiekt loggera
     Logger(std::string caller, const std::string& logfileName, int logfileNumber);
 
     //W destruktorze nastepuje zamkniecie pliku logu

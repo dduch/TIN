@@ -136,6 +136,7 @@ int FileManager::getFileSize(std::string filename) {
 /*
  * Funkcja usuwająca zasób z katalogu Resources, jej głównym przeznaczeniem
  * jest usuwanie plików, których nie udało się pobrać w całości
+ * stanowi "opakowanie" dla standardowej funkcji usuwającej
  */
 int FileManager::unlinkFile(std::string filename)
 {
@@ -145,8 +146,9 @@ int FileManager::unlinkFile(std::string filename)
 
 
 /*
- * Funkcja usuwająca zasób z katalogu Resources, jej głównym przeznaczeniem
- * jest usuwanie plików, których nie udało się pobrać w całości
+ * Funkcja usuwająca zmieniająca nazwę zasobu, jej zadaniem jest
+ * zmiana nazwy pliku, który został poprawnie w całości odebrany.
+ * Usuwane jest rozszerzenie .tmp - plik może być już przesyłany do innych węzłów
  */
 int FileManager::renameFile(std::string filename)
 {

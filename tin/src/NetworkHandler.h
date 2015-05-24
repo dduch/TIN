@@ -53,8 +53,9 @@ protected:
 	/*
 	*Funkcje, których implementacja jest niezmienna dla obiektów pochodnych
 	*/
+
 	/*
-	 * Tworzy gniazdo
+	 * Tworzy gniazdo, jedna implementacja dla wszystkich klas dziedziczących
 	 */
 	bool createSocket();
 	/*
@@ -65,22 +66,34 @@ protected:
 	 * Wysyła podany jako argument pakiet, na odpowiedzni adres
 	 */
 	void sendDatagram(ProtocolPacket packet, sockaddr_in dest_address, NetworkHandler* object, std::string log_msg);
+
 	/*
 	 * Rozpoczyna nałuchiwanie na wskazanym gnieździe, danego obiektu.
 	 * Wszystkie obiekty klas potomnych muszą realizować takie samo nasłuchiwanie, dlatego
 	 * funkcja znalazła się w nadrzdnej klasie abstrakcyjnej
 	 */
 	virtual void startListen(sockaddr_in address, int sockfd, NetworkHandler* object);
+
 	/*
 	 * 	Dokonuje retransmisji ostatnio wysyłanego pakietu
+	 * 	W argumencie przekazywane wskazanie na obiekt, na rzecz którego funkcja ma
+	 * 	zostać wykonana
 	 */
 	virtual void repeatSending(NetworkHandler* object);
 
+
 	/*
 	 * Funkcje których implementacja różni się w obiektach pochodnych
-	 * Koniczna implementacja w klasach pochodnych
+	 * Czysto wirtualne -koniczna implementacja w klasach pochodnych
 	 */
+
+	// Dowiązuje gniazdo do adresu
 	virtual bool bindSocket() = 0;
+
+	/*
+	 * Funkcja, której zadaniem jest interpretacja pakietu i skierowanie do
+	 * dalszej obsługi w zależnośći jakiego typu pakiet został odebrany.
+	 */
 	virtual void receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address) = 0;
 
 public:

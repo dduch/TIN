@@ -4,10 +4,17 @@
 // Początkowo nie istnieje żadna instancja Listenera, należy ją utworzyć
 Listener* Listener:: instance = NULL;
 
+/*
+ * Utworzenie nowego listenera oraz skojarzonego z nim obiektu Protocol Handlera
+ */
 Listener:: Listener(){
 	prot_handler = new ProtocolHandler();
 }
 
+/*
+ * Na zakończenie pracy aplikacji usuwa obiekt Listenera
+ * oraz robi "porządek" z używanym gniazdem, zwalnia dynamicznie alokowaną pamieć
+ */
 Listener:: ~Listener(){
 	closeSocket(sock_fd);
 	delete(prot_handler);
@@ -27,7 +34,8 @@ Listener* Listener:: getInstance(){
 }
 
 /*
- * Dowiązanie gniazda do Listenera
+ * Dowiązanie gniazda do Listenera,
+ * Listener musi nasłuchiwać na ustalonym arbitralnie porcie serwerowym
  */
 bool Listener::bindSocket() {
     bzero(&my_address, sizeof(my_address));
@@ -58,7 +66,9 @@ void Listener:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_addr
 }
 
 /*
- * Obsługa pakietu RQ
+ * Obsługa pakietu RQ, jeśli węzeł dysponuje żądanym zasobem zwraca pakiet RESP
+ * scr_address to struktura opisująca źródło skąd przyszedł pakiet RQ,
+ * posłuży do ewentualnej transmisji pakietów DATA
  */
 void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address){
 	std::string file_name(req.filename);
@@ -74,7 +84,10 @@ void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address){
 }
 
 /*
- * Obsługa pakietu RD - rozpoczyna właściwą transmisję pomiędzy węzłami
+ * Obsługa pakietu RD - rozpoczyna właściwą transmisję pomiędzy węzłami,
+ * req - pakiet RD, żądający rozpoczęcia własciwego transferu,
+ *  src_address - adres źródłowy, stąd przyszło żądanie req, na ten adres należy kierować pakiety
+ *  z danymi
  */
 void Listener::handleRDPacket(ProtocolPacket req, sockaddr_in src_address){
 	Arguments arguments;
@@ -88,7 +101,8 @@ void Listener::handleRDPacket(ProtocolPacket req, sockaddr_in src_address){
     }
 }
 /*
- * Statyczna metoda rozpoczynająca pracę Listenera jako nowego wątku
+ * Statyczna metoda rozpoczynająca pracę Listenera jako nowego wątku,
+ * pobiera instancję Listenera, na rzecz którego rozpoczyna nasłuchiwanie
  */
 void* Listener:: run(void*){
 	Listener* listener = Listener::getInstance();
@@ -116,6 +130,7 @@ void Listener:: startListen(sockaddr_in src_address, int sock_fd){
             char *buffer = new char[sizeof(ProtocolPacket)];
             memcpy(buffer, &received_packet, sizeof(received_packet));
 
+            //kieruje odebrany pakiet do dalszej obsługi
             receiveDatagram(buffer, sizeof(received_packet), src_address);
         }
     }

@@ -10,8 +10,10 @@
  */
 Downloader:: Downloader(std::string filename, int transferID) {
 	this->filename = filename;
-	this->prot_handler = new ProtocolHandler();
 	this->transferID = transferID;
+
+	//utwórz powiązane obiekty: logera i protocol handlera
+	this->prot_handler = new ProtocolHandler();
 	this->logger = new Logger("Downloader", filename, pthread_self());
 }
 
@@ -19,7 +21,6 @@ Downloader:: Downloader(std::string filename, int transferID) {
  * Zamknij gniazdo i skojarzony port
  */
 Downloader:: ~Downloader() {
-	//FileManager::closeFile(this->file_descriptor);
 	closeSocket(sock_fd);
 	delete(prot_handler);
 	delete(logger);
@@ -30,12 +31,16 @@ Downloader:: ~Downloader() {
  * Ustawienie opcji wysyłania broadcastowego
  */
 bool Downloader::bindSocket() {
+
+	// ustawienie możliwośći wysłania broadcastu
 	int on = 1;
 	setsockopt(sock_fd, SOL_SOCKET, SO_BROADCAST, &(on), sizeof(on));
+
 	bzero(&my_address, sizeof(my_address));
 	my_address.sin_family = AF_INET;
     my_address.sin_addr.s_addr = htonl(INADDR_ANY);
     my_address.sin_port = 0;
+
     if(bind(sock_fd, (struct sockaddr *) &my_address, sizeof(my_address)) == -1)
     {
     	return false;
@@ -49,6 +54,7 @@ bool Downloader::bindSocket() {
  */
 bool Downloader:: connectInit(){
 
+	// dla połączenia hamachi adres broadcastowy 25.255.255.255
 	struct hostent *hp, *gethostbyname(const char *name);
  	hp = gethostbyname("25.255.255.255"); 
 
@@ -66,6 +72,8 @@ bool Downloader:: connectInit(){
  */
 bool Downloader:: sendBroadcast(std::string filename){
 	ProtocolPacket req_packet = prot_handler->prepareRQ(strlen(filename.c_str()) + 1, filename.c_str(), strlen(filename.c_str()) +1 );
+
+	//zapamiętanie pakietu jako ostatnio wysyłanego - na wypadek konieczności retransmisji
 	memcpy(&last_packet, &req_packet, sizeof(req_packet));
 
 	if(sendto(this->sock_fd, &req_packet, sizeof(req_packet), 0, (struct sockaddr *) &broadcast_address, sizeof(broadcast_address)) == -1){
@@ -106,9 +114,12 @@ void* Downloader:: run(void* req){
 
 	if(downloader->createSocket() && downloader->bindSocket() && downloader->connectInit()){
 		if(downloader->sendBroadcast(filename)){
+			// tuż po wysłaniu, należy wyzerować pola zwiąne z timeoutami,
+			// od tego momentu liczony upływ czasu w oczekiwaniu na odpowiedz
 			downloader->start_critical_waiting = time(NULL);
 			downloader->start_waiting = time(NULL);
 			downloader->timeout_type = RESP_TO;
+
 			downloader->startListen(downloader->my_address, downloader->sock_fd, downloader);
 
 			// Nastąpił krytyczny timeout - zakończenie transferu
@@ -154,10 +165,12 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
 	start_critical_waiting = time(NULL);
 	timeout_type = DATA_TO;
 
+	// przygotuj komunikat dla logera z informacją o adresie, z którym rozpocznie się wymiana pliku
 	std::string address(inet_ntoa(src_address.sin_addr));
 	std::string port =  std::to_string(ntohs(src_address.sin_port));
+	std::string log_msg = START_DOWNLOADING + address + ":" + port;
 
-	sendDatagram(packet, src_address, this, START_DOWNLOADING + address + ":" + port);
+	sendDatagram(packet, src_address, this, log_msg);
 }
 
 /*
@@ -167,18 +180,20 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
 void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_address){
         bool lastData = false;
         // ostatni blok DATA?
-        if (data_packet.data_size < MAX_DATA_BLOCK_SIZE)
-                lastData = true;
+        if (data_packet.data_size < MAX_DATA_BLOCK_SIZE){
+        	lastData = true;
+        }
 
         ProtocolPacket packet;
 
-        // jesli przyszedl pakiet o numerze
+        // jesli przyszedl pakiet o numerze o jeden większym niż aktualnie odebrany - wszyko OK
         if (data_packet.number == current_pacekt+1) {
             FileManager::appendFile(this->file_descriptor, data_packet.data, data_packet.data_size);
             received_data += data_packet.data_size;
             RunningTasks::getIstance().updateTaskProgress(this->transferID, data_packet.data_size);
             packet = prot_handler->prepareACK(++current_pacekt);
         }
+        // w p.p nastąpiło zdublowanie pakietu, zignoruj go i wyślij ponownie ack
         else{
             start_critical_waiting = time(NULL);
             timeout_type = DATA_TO;
@@ -187,7 +202,7 @@ void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_a
             return;
         }
 
-        // jesli ostatni blok DATA => zamknij plik, loguj koniec, wyslij ACK, koncz watek:
+        // jesli ostatni blok DATA to zamknij plik, loguj koniec, wyslij ACK, koncz watek:
         if (lastData) {
             FileManager::closeFile(this->file_descriptor);
             RunningTasks::getIstance().freeTaskSlot(this->transferID);
