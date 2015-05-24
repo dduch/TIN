@@ -27,8 +27,8 @@ private:
         bool dirty;                     // Flaga zkonczenia watku
         bool interruptReq;              // Flaga zadania przerwania watku
         std::string filename;           // Nazwa poberianego pliku
-        unsigned int downloadedBytes;   // Liczba pobranych bajtow danych
-        unsigned int allBytes;          // Rozmiar pliku w bajtach
+        unsigned long int downloadedBytes;   // Liczba pobranych bajtow danych
+        unsigned long int allBytes;          // Rozmiar pliku w bajtach
 
         RunningTask() : dirty(false), interruptReq(false), filename(), downloadedBytes(0), allBytes(0) {}
     };
@@ -72,7 +72,7 @@ public:
     // - liczbe pobranych bajtow (downloadedB)
     // - rozmiar pliku (fsize)
     // Zwraca: true - gdy transfer w toku, false - gdy transfer zakonczony/nieaktywny/niepoprawny identyfikator
-    bool chceckTaskProgress(int transferID, unsigned int* downloadedB, unsigned int* fsize);
+    bool chceckTaskProgress(int transferID, unsigned long int* downloadedB, unsigned long int* fsize);
 
     // Umieszcza w fname nazwe pliku transferu transferID
     // Zwraca: false gdy niepoprawny identyfikator
@@ -84,6 +84,10 @@ public:
     // Funkca testowa, drukuje zawartosc tablicy transferow na stdout
     // Format: transferID: status "nazwa pliku" bajty_pobrane of rozmiar_pliku B [INT - jesli ustawiona zadanie przerwania]
     void debug__printAllTasks();
+
+
+    //Zwraca informacje czy transfer o zadanym transferze ma się zakończyć
+    bool checkTerminateFlag(int transferID);
 };
 
 #endif

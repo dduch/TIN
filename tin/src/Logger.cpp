@@ -5,14 +5,12 @@
 //Konstruktor tworzy plik logu w folderze "log" aplikacji - UWAGA - folder log musi istniec
 //Wynikowa nazwa pliku logu:
 //logfileName + logfileNumber(jeśli >= 0) + znacznik czasu
-Logger::Logger(const std::string& logfileName, int logfileNumber){
+Logger::Logger(std::string caller, const std::string& logfileName, int logfileNumber){
     std::string logfile = "log/";
-    logfile.append(logfileName);
+
+    // dopisanie nazwy typu wątku wywołującego
+    logfile.append(caller);
     logfile.append("_");
-    if (logfileNumber >= 0) {
-        logfile.append(std::to_string(logfileNumber));
-        logfile.append("_");
-    }
 
     // Dodanie znacznika czasu
     std::time_t timer;
@@ -34,7 +32,18 @@ Logger::Logger(const std::string& logfileName, int logfileNumber){
     logfile.append(":");
     logfile.append(std::to_string(timeinfo->tm_sec));
 
+    //dopisanie nazwy pliku
+    logfile.append("_");
+    logfile.append(logfileName);
+
+    // dopisanie identyfikatora wątku wywołującego
+    if (logfileNumber >= 0) {
+    	logfile.append("_");
+        logfile.append(std::to_string(logfileNumber));
+
+    }
     logfile.append(".txt");             // Dodanie formatu tekstowego
+
 
     logfd = open(logfile.c_str(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR+S_IWUSR+S_IRGRP+S_IROTH); // Otwarcie pliku logu
 

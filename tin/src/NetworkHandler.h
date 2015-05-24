@@ -48,6 +48,7 @@ protected:
 	int file_descriptor;							// dekryptor pliku, którego transfer dotyczy
 	unsigned int current_pacekt = 0x00000;			// aktualna wartość otrzymanego/wsyłanego pakietu
 	std::string filename;							// nazwa pliku, którego transfer dotyczy
+	int transferID = - 1;							// id transferu
 
 	/*
 	*Funkcje, których implementacja jest niezmienna dla obiektów pochodnych
@@ -83,10 +84,11 @@ protected:
 	virtual void receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address) = 0;
 
 public:
-	time_t start_waiting;
-	time_t start_critical_waiting;
-	int timeout_type;
-	bool is_crit_to = false;
+	time_t start_waiting;					// zmienna, przechowująca czas, od którego należy liczyć tiemout_type
+	time_t start_critical_waiting;			// zmienna, przechowująca czas, od którego należy liczyć critical_timeout
+	int timeout_type;						// zmienna, przechowująca informację z jakiego typu timeoutem mamy
+											// do czynienia - ile czasu może upłynąć bez odpowiedzni na pakiet
+	bool is_crit_to = false;				// zmienna, przechowująca informację czy nastąpił krytyczny timeout
 
 	/*
 	 * Statyczna metoda startowa dla obiektów pochodnych uruchamianych w nowych wątkach

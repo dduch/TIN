@@ -16,8 +16,6 @@ private:
 	bool is_RESP_received = false;								// czy odebrano jakikolwiek pakiet RESP
 	struct sockaddr_in broadcast_address;		    			// adres broadcastowy, na który należy wysłać żądanie
 
-	int transferID;			// id transferu pobierania
-
 	bool sendBroadcast(std::string filename);					// wyślij żądanie udostępnienia pliku do wszystkich węzłów
 	bool connectInit();											// zainicjuj połączenie
 

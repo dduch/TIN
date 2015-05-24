@@ -10,6 +10,7 @@ Listener:: Listener(){
 
 Listener:: ~Listener(){
 	closeSocket(sock_fd);
+	delete(prot_handler);
 }
 
 /*
@@ -41,7 +42,10 @@ bool Listener::bindSocket() {
 	return true;
 }
 
-
+/*
+ *  Funkcja wywoływana po przyjściu pakietu
+ *  Po interpretacji pakietu, kieruje do obsługi przez odpowiednie funkcje strujące
+ */
 void Listener:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address){
     ProtocolPacket packet = prot_handler->interpretDatagram(buffer, buff_len);
 
@@ -51,25 +55,30 @@ void Listener:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_addr
     else if(prot_handler->isRD(packet)){
     	handleRDPacket(packet,src_address);
     }
-	else {
-		printf("Listener: dostalem cos innego niz RQ i RD.\n");
-	}
 }
 
+/*
+ * Obsługa pakietu RQ
+ */
 void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address){
 	std::string file_name(req.filename);
+
+	// jeśli węzeł posiada, niepusty plik o wskazanej nazwie - odpowiada na zgłoszenie
 	if(FileManager::checkFile(file_name)){
 		int file_size = FileManager::getFileSize(file_name);
-		if (file_size > 0)
-		{
+		if (file_size > 0){
 			ProtocolPacket packet = prot_handler->prepareRESP(file_size);
 			sendDatagram(packet,src_address, this, std::string());
 		}
 	}
 }
 
+/*
+ * Obsługa pakietu RD - rozpoczyna właściwą transmisję pomiędzy węzłami
+ */
 void Listener::handleRDPacket(ProtocolPacket req, sockaddr_in src_address){
 	Arguments arguments;
+	//std::string name (req.filename);
 	memcpy(&arguments.file_name, &req.filename, MAX_FILENAME_SIZE);
 	memcpy(&arguments.dest_address, &src_address, sizeof(src_address));
 
@@ -91,7 +100,11 @@ void* Listener:: run(void*){
 	return (void*)true;
 }
 
-
+/*
+ *  Metoda nasłuchująca dla Listenera - dla listnera nasłuchiwanie uproszczone w stosunku do
+ *  funkcji nasłuchującej z klasy bazowej, zatem korzystne było wydzielenie jej jako oddzielnej
+ *  implementacji
+ */
 void Listener:: startListen(sockaddr_in src_address, int sock_fd){
 	socklen_t address_len = sizeof(src_address);
     while(1)

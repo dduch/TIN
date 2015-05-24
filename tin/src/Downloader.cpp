@@ -12,7 +12,7 @@ Downloader:: Downloader(std::string filename, int transferID) {
 	this->filename = filename;
 	this->prot_handler = new ProtocolHandler();
 	this->transferID = transferID;
-	logger = new Logger(filename, pthread_self());
+	this->logger = new Logger("Downloader", filename, pthread_self());
 }
 
 /*
@@ -21,6 +21,8 @@ Downloader:: Downloader(std::string filename, int transferID) {
 Downloader:: ~Downloader() {
 	//FileManager::closeFile(this->file_descriptor);
 	closeSocket(sock_fd);
+	delete(prot_handler);
+	delete(logger);
 }
 
 /*
@@ -109,12 +111,16 @@ void* Downloader:: run(void* req){
 			downloader->timeout_type = RESP_TO;
 			downloader->startListen(downloader->my_address, downloader->sock_fd, downloader);
 
+			// Nastąpił krytyczny timeout - zakończenie transferu
 			if(downloader->is_crit_to)
 			{
-				MessagePrinter::print("Downloading stopped - no such file. TransferID = " + std::to_string(transferID));
+				MessagePrinter::print("Downloading stopped. TransferID = " + std::to_string(transferID));
+				RunningTasks::getIstance().freeTaskSlot(transferID);
+				FileManager::unlinkFile(filename);
 			}
 		}
 	}
+	delete(downloader);
 	return (void*)0;
 }
 
@@ -131,20 +137,27 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
 		return;
 	}
 
+	// oznacz, że odebrano już jakiś pakiet RESP - ignoruj wszystkie inne
 	this->is_RESP_received = true;
 	this->file_descriptor = FileManager::createFile(this->filename);
 	if (this->file_descriptor < 0) {
 		return;
 	}
+
+	// zaktualizuj informacje o rozmiarze pliku, będącego przedmiotem transferu
 	this->file_size = resp_packet.data_size;
+	RunningTasks::getIstance().updateFileSize(this->transferID, this->file_size);
 
 	const char* file_name = filename.c_str();
-
 	ProtocolPacket packet = prot_handler->prepareRD(this->filename.length() + 1, file_name, this->filename.length() + 1);
 
 	start_critical_waiting = time(NULL);
 	timeout_type = DATA_TO;
-	sendDatagram(packet, src_address, this, START_DOWNLOADING);
+
+	std::string address(inet_ntoa(src_address.sin_addr));
+	std::string port =  std::to_string(ntohs(src_address.sin_port));
+
+	sendDatagram(packet, src_address, this, START_DOWNLOADING + address + ":" + port);
 }
 
 /*
@@ -158,23 +171,28 @@ void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_a
                 lastData = true;
 
         ProtocolPacket packet;
+
+        // jesli przyszedl pakiet o numerze
         if (data_packet.number == current_pacekt+1) {
-            /*int bytes = */FileManager::appendFile(this->file_descriptor, data_packet.data, data_packet.data_size);
+            FileManager::appendFile(this->file_descriptor, data_packet.data, data_packet.data_size);
             received_data += data_packet.data_size;
+            RunningTasks::getIstance().updateTaskProgress(this->transferID, data_packet.data_size);
             packet = prot_handler->prepareACK(++current_pacekt);
         }
         else{
-			packet = prot_handler->prepareACK(current_pacekt);	
-        	//repeatSending(this);
-        	//return;
+            start_critical_waiting = time(NULL);
+            timeout_type = DATA_TO;
+ 			packet = prot_handler->prepareACK(current_pacekt);
+            sendDatagram(packet, src_address, this, RETRANSMISION);
+            return;
         }
-
 
         // jesli ostatni blok DATA => zamknij plik, loguj koniec, wyslij ACK, koncz watek:
         if (lastData) {
             FileManager::closeFile(this->file_descriptor);
             RunningTasks::getIstance().freeTaskSlot(this->transferID);
             sendDatagram(packet, src_address, this, RECEIVED_DATA + std::to_string(current_pacekt));
+            FileManager::renameFile(filename);
             MessagePrinter::print("Download finished. TransferID: " + std::to_string(transferID));
             logger->logEvent(FINISH_RECEIVING, INFO);
             pthread_exit(NULL);

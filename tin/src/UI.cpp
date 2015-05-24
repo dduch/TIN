@@ -1,5 +1,6 @@
 #include "UI.h"
 #include <string.h>
+#include <iomanip>
 
 
 // Komunikaty do wypisywania (a przynajmniej wiekszosc z nich)
@@ -186,7 +187,6 @@ void UI::startNewTransfer(){
 
         MessagePrinter::print(tmp);
         pthread_t tid;
-
         if (pthread_create(&tid, NULL, Downloader::run, newTransferID)) {
             MessagePrinter::print("Error while initializing thread");
         }
@@ -230,8 +230,8 @@ void UI::showTransfers(){
 
 // Wypisuje postepy wybranego transferu
 void UI::chceckTransferProgress(){
-    unsigned int downloadedBytes;
-    unsigned int allBytes;
+    unsigned long int downloadedBytes;
+    unsigned long int allBytes;
 
     if (!RunningTasks::getIstance().chceckTaskProgress(chosenTransferID, &downloadedBytes, &allBytes))
         MessagePrinter::print(MSG_BADID); // Niepoprawny id transferu
@@ -243,11 +243,14 @@ void UI::chceckTransferProgress(){
         tmp.append("\"\tProgress: ");
         tmp.append(std::to_string(downloadedBytes));
         tmp.append(" of ");
-        if (allBytes != 0) // Zabezpiecznenie na wypadek gdyby Downloader jeszcze nie poznal wielkoscie pobieranego pliku
+        if (allBytes != 0){ // Zabezpiecznenie na wypadek gdyby Downloader jeszcze nie poznal wielkoscie pobieranego pliku
             tmp.append(std::to_string(allBytes));
+            tmp.append(" bytes   ");
+            long int percent = (downloadedBytes * 100) / allBytes;
+            tmp.append("  ~" + std::to_string(percent) + "%");
+        }
         else
             tmp.append("size yet unknown");
-        tmp.append(" bytes");
         MessagePrinter::print(tmp);
     }
 }

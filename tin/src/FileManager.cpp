@@ -13,7 +13,7 @@ Tworzy pusty plik o nazwie 'filename' w katalogu "Resources" i otwiera go do zap
 Zwraca deskryptor otwartego pliku, gdy się udało; -1 gdy błąd.
 */
 int FileManager::createFile(std::string filename) {
-	std::string filepath = RESOURCES_DIR + filename;
+	std::string filepath = RESOURCES_DIR + filename + ".tmp";
 	//tworz i ewentualnie kasuj zawartosc pliku, pisz zawsze na jego koncu, perms: 644):
 	int fd = open(filepath.c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_APPEND, S_IRUSR+S_IWUSR+S_IRGRP+S_IROTH);
 	return fd;
@@ -130,4 +130,29 @@ int FileManager::getFileSize(std::string filename) {
 		close(fd);
 		return bytes;
 	}
+}
+
+
+/*
+ * Funkcja usuwająca zasób z katalogu Resources, jej głównym przeznaczeniem
+ * jest usuwanie plików, których nie udało się pobrać w całości
+ */
+int FileManager::unlinkFile(std::string filename)
+{
+	const char* path = (RESOURCES_DIR + filename + ".tmp").c_str();
+	return unlink(path);
+}
+
+
+/*
+ * Funkcja usuwająca zasób z katalogu Resources, jej głównym przeznaczeniem
+ * jest usuwanie plików, których nie udało się pobrać w całości
+ */
+int FileManager::renameFile(std::string filename)
+{
+	std::string old_name = "Resources/"+ filename + ".tmp";
+	const char* o_name = old_name.c_str();
+	const char* n_name = ("Resources/" + filename).c_str();
+
+	return rename(o_name, n_name);
 }

@@ -95,7 +95,7 @@ bool RunningTasks::updateTaskProgress(int transferID, unsigned int deltaSize){
 // - rozmiar pliku (fsize)
 // - nazwe pliku (fname)
 // Zwraca: true - gdy transfer w toku, false - gdy transfer zakonczony/nieaktywny/niepoprawny id
-bool RunningTasks::chceckTaskProgress(int transferID, unsigned int* downloadedB, unsigned int* fsize){
+bool RunningTasks::chceckTaskProgress(int transferID, unsigned long int* downloadedB, unsigned long int* fsize){
     if (transferID >= ntasks || transferID < 0)
         return false; // Niepoprawny id
 
@@ -107,6 +107,22 @@ bool RunningTasks::chceckTaskProgress(int transferID, unsigned int* downloadedB,
     pthread_mutex_unlock(&mutexes[transferID]);
     return runningFlag;
 }
+
+bool RunningTasks::checkTerminateFlag(int transferID)
+{
+    if (transferID >= ntasks || transferID < 0)
+        return false; // Niepoprawny id
+
+    bool reply = false;
+    pthread_mutex_lock(&mutexes[transferID]); // Sekcja krytyczna
+    	if(tasks[transferID].interruptReq)
+    	{
+    		reply = true;
+    	}
+    pthread_mutex_unlock(&mutexes[transferID]);
+	return reply;
+}
+
 
 // Umieszcza w fname nazwe pliku transferu transferID
 bool RunningTasks::checkFileName(int transferID, std::string& fname){
