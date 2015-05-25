@@ -6,7 +6,7 @@ CXXFLAGS = -Wall -g -pthread -std=c++0x
 
 # define any directories containing header files other than /usr/include
 #
-INCLUDES = -I/home/newhall/include  -I../include ../src/Downloader.h ../src/FileManager.h ../src/Listener.h ../src/Logger.h ../src/MessagePrinter.h ../src/NetworkHandler.h ../src/ProtocolHandler.h ../src/RunningTasks.h ../src/Sender.h ../src/UI.h 
+INCLUDES =  -I../include ../src/Downloader.h ../src/FileManager.h ../src/Listener.h ../src/Logger.h ../src/MessagePrinter.h ../src/NetworkHandler.h ../src/ProtocolHandler.h ../src/RunningTasks.h ../src/Sender.h ../src/UI.h 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
