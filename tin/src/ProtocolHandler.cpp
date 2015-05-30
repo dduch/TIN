@@ -2,18 +2,20 @@
 #include <iostream>
 #include <string.h>
 
-ProtocolHandler:: ProtocolHandler(){}
 
-ProtocolHandler:: ~ProtocolHandler(){}
+ProtocolHandler:: ProtocolHandler() {}
+
+ProtocolHandler:: ~ProtocolHandler() {}
 
 struct ProtocolPacket ProtocolHandler::prepareDATA(unsigned int data_number, unsigned int data_data_size, char* data, unsigned int size_of_data)
 {
 	struct ProtocolPacket data_packet;
+	//data_packet.data = new char[MAX_DATA_BLOCK_SIZE];
+	//strncpy(data_packet.data, data, size_of_data);
+	memcpy(data_packet.data, data, size_of_data);
 	//data_number do 20 bitow, data_data_size do 12 bitow, size_of_data do 1024*32, inaczej WTF
-	data_packet.type = (data_number < 1048576 && data_data_size < 4096 && size_of_data < 1024*32)? DATA : WTF;
-	if(data_packet.type == DATA){
-		memcpy(data_packet.data, data, size_of_data);
-	}
+	//data_packet.type = (data_number < 1048576 && data_data_size < 4096 && size_of_data < 1024*32)? DATA : WTF;
+	data_packet.type = DATA;
 	data_packet.number = data_number;
 	data_packet.data_size = data_data_size;
 	return data_packet;
@@ -31,12 +33,11 @@ struct ProtocolPacket ProtocolHandler::prepareACK(unsigned int ack_number)
 struct ProtocolPacket ProtocolHandler::prepareRQ(unsigned int rq_str_length, const char* filename, unsigned int size_of_filename)
 {
 	struct ProtocolPacket rq_packet;
+	//rq_packet.filename = new char[MAX_DATA_BLOCK_SIZE];
+	strncpy(rq_packet.filename, filename, size_of_filename);
+	rq_packet.filename[size_of_filename - 1] = '\0';
 	//rq_str_length tylko do 8 bitow oraz nazwa pliku do 50, inaczej WTF
 	rq_packet.type = (rq_str_length < 256 && size_of_filename < 51)? RQ : WTF ;
-	if(rq_packet.type == RQ){
-		strncpy(rq_packet.filename, filename, size_of_filename);
-		rq_packet.filename[size_of_filename - 1] = '\0';
-	}
 	rq_packet.str_length = rq_str_length;
 	return rq_packet;
 }
@@ -52,12 +53,11 @@ struct ProtocolPacket ProtocolHandler::prepareRESP(unsigned int resp_data_size)
 struct ProtocolPacket ProtocolHandler::prepareRD(unsigned int rd_str_length, const char* filename, unsigned int size_of_filename)
 {
 	struct ProtocolPacket rd_packet;
+	//rd_packet.filename = new char[MAX_DATA_BLOCK_SIZE];
+	strncpy(rd_packet.filename, filename, size_of_filename);
+	rd_packet.filename[size_of_filename - 1] = '\0';
 	//rd_str_length tylko do 8 bitow oraz nazwa pliku do 50, inaczej WTF
 	rd_packet.type = (rd_str_length < 256 && size_of_filename < 51)? RD : WTF ;
-	if(rd_packet.type == RD){
-		strncpy(rd_packet.filename, filename, size_of_filename);
-		rd_packet.filename[size_of_filename - 1] = '\0';
-	}
 	rd_packet.str_length = rd_str_length;
 	return rd_packet;
 }
@@ -120,6 +120,3 @@ struct ProtocolPacket ProtocolHandler::interpretDatagram(char* datagram, unsigne
 	memcpy(&packet, datagram, datagram_size);
 	return packet;
 }
-
-
-

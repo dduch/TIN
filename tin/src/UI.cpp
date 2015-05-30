@@ -119,18 +119,6 @@ UI::CommandType UI::parseCommand(){
 // Czekna na nazwe pliku command = "filename"
 void UI::getFileName(){
     std::cin >> filename;
-
-    // @todo???: Ewentualna obsluga nazw z bialymi znakami oznaczonych w cudzyslowiu
-    /*
-    if (filename[0] == '\"') {
-        filename.erase(filename.begin()); // Usuniecie pierwszego znaku "
-        std::string tmp;
-        while(filename.back() != '\"') {
-            std::cin >> tmp;
-            filename.append(tmp);
-        }
-        filename.erase(--filename.end()); // Usuniecie ostatniego znaku "
-    }*/
 }
 
 // Czeka na identyfikator transferu
@@ -194,7 +182,7 @@ void UI::startNewTransfer(){
 }
 
 // Wysyla zadanie zakonczenia transferu
-void UI::stopTransfer(){
+void UI::stopTransfer() {
     if (!RunningTasks::getIstance().terminateTask(chosenTransferID))
         MessagePrinter::print(MSG_BADID); // Niepoprawny id transferu
     else
@@ -202,7 +190,7 @@ void UI::stopTransfer(){
 }
 
 // Wypisuje biezace transfery
-void UI::showTransfers(){
+void UI::showTransfers() {
     std::list<int> taskList;
     RunningTasks::getIstance().getActiveTransfersID(taskList);
     if (taskList.empty()) {

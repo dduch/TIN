@@ -1,5 +1,4 @@
 #include "FileManager.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -7,6 +6,7 @@
 #include <errno.h>
 #include <cerrno>
 #include <iostream>
+
 
 /*
 Tworzy pusty plik o nazwie 'filename' w katalogu "Resources" i otwiera go do zapisu.
@@ -29,7 +29,7 @@ bool FileManager::checkFile(std::string filename) {
 		return false;
 	}
 	if (close(fd) != 0)
-		return false; // ???
+                return false;
 	return true;
 }
 
@@ -111,11 +111,10 @@ Zwraca:
 int FileManager::getFileSize(std::string filename) {
 	int fd = openFile(filename, READ_F);
 
-	if(fd < 0)
-	{
+        if(fd < 0) {
 		return -1;
 	}
-	else{
+        else {
 		int bytes = lseek(fd, 0, SEEK_END);
 		if (bytes < 0) {
 			if (errno == EBADF || errno == EINVAL) {
@@ -138,21 +137,19 @@ int FileManager::getFileSize(std::string filename) {
  * jest usuwanie plików, których nie udało się pobrać w całości
  * stanowi "opakowanie" dla standardowej funkcji usuwającej
  */
-int FileManager::unlinkFile(std::string filename)
-{
-	const char* path = (RESOURCES_DIR + filename + ".tmp").c_str();
+int FileManager::unlinkFile(std::string filename) {
+        const char * path = (RESOURCES_DIR + filename + ".tmp").c_str();
 	return unlink(path);
 }
 
 
 /*
- * Funkcja usuwająca zmieniająca nazwę zasobu, jej zadaniem jest
+ * Funkcja zmieniająca nazwę zasobu, jej zadaniem jest
  * zmiana nazwy pliku, który został poprawnie w całości odebrany.
  * Usuwane jest rozszerzenie .tmp - plik może być już przesyłany do innych węzłów
  */
-int FileManager::renameFile(std::string filename)
-{
-	std::string old_name = "Resources/"+ filename + ".tmp";
+int FileManager::renameFile(std::string filename) {
+        std::string old_name = "Resources/" + filename + ".tmp";
 	const char* o_name = old_name.c_str();
 	const char* n_name = ("Resources/" + filename).c_str();
 

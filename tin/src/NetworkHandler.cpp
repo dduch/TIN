@@ -10,79 +10,89 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
+#include <cerrno>
 
 
-/*
- * Domyślny, pusty destruktor
- */
-NetworkHandler:: ~NetworkHandler(){
-
-}
+NetworkHandler:: ~NetworkHandler() {}
 
 /*
  * Utworzenie nowego gniazda UDP
  * W przypadku sukcesu uzupełnia deskryptor gniazda
  */
-bool NetworkHandler:: createSocket(){
-	if ((sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1){
-		return false;
-	}
-	//z uwagi na konstrukcję funkcji nasłuchującej, konieczne jest wyłączenie domyślnego mechanizmu blokowania
-	fcntl(sock_fd, F_SETFL, O_NONBLOCK);
-	return true;
+bool NetworkHandler:: createSocket() {
+    if ((sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+        return false;
+    }
+    return true;
 }
 
 /*
  * Funkcja zamykająca gniazdo o podanym deskryptorze
  */
-void NetworkHandler:: closeSocket(int socket){
-	close(socket);
+void NetworkHandler:: closeSocket(int socket) {
+    close(socket);
 }
 
 /*
  * Rozpoczyna nasłuchiwanie na wskazanym gnieździe danego obiektu. Po otrzymaniu wiadomości zleca
  * parsowanie i obsługę funkcji receiveDatagram, odpowiedniej dla danego obiektu
  */
-void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkHandler* object){
-	socklen_t address_len = sizeof(src_address);
+void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkHandler* object) {
+    socklen_t address_len = sizeof(src_address);
+    fd_set readset;
+    int result;
+    struct timeval timeout;
 
-    while(1)
-    {
-    	// sprawdz czy wątek nie dostał polecenia zakończenia od użytkownika
-    	if(RunningTasks::getIstance().checkTerminateFlag(object->transferID))
-    	{
-    		object->logger->logEvent(TERMINATE_REQUEST, WARNING);
-    		RunningTasks::getIstance().freeTaskSlot(object->transferID);
-    		pthread_exit(NULL);
-    	}
+    while (1) {
+        FD_ZERO (&readset);
+        FD_SET (sock_fd, &readset);
 
-    	// jeśli nastąpił krytyczny timeot - zaloguj informację do pliku, wyjdź z funkcji = zakończ wątek
-    	if(object->start_critical_waiting != 0 && (time(NULL) - object->start_critical_waiting) > CRITICAL_TO){
-    		object->logger->logEvent(CRITICAL_TO_ERROR, ERROR);
-    		object->is_crit_to = true;
-    		return;
-    	}
+        // czekaj na zdarzenie lub timeout:
+        timeout.tv_sec = object->timeout_type;
+        timeout.tv_usec = 0;
+        result = select(sock_fd+1, &readset, NULL, NULL, &timeout);
 
-    	// jeśli nastąpił timeout niekrytyczny, ponów transmisję ostatnio wysłanego pakietu
-    	if(object->start_waiting != 0 && (time(NULL) - object->start_waiting) > object-> timeout_type){
-    		repeatSending(object);
-		}
-
-        if (recvfrom(sock_fd, &received_packet, sizeof(ProtocolPacket), 0, (struct sockaddr*)&src_address, &address_len) == -1){
-
+        // po odblokowaniu najpierw sprawdzamy czy moze watek nie dostal polecenia zakonczenia od uzytkownika:
+        if (RunningTasks::getIstance().checkTerminateFlag(object->transferID)) {
+        	object->logger->logEvent(TERMINATE_REQUEST, WARNING);
+            RunningTasks::getIstance().freeTaskSlot(object->transferID);
+            FileManager::unlinkFile(object->filename);
+            pthread_exit(NULL);
         }
-        else{
-            char *buffer = new char[sizeof(ProtocolPacket)];
-            memcpy(buffer, &received_packet, sizeof(received_packet));
 
-            // wyzeruj wartości czasu, dla których mają być liczone timeouty
-            object->start_critical_waiting = 0;
-            object->start_waiting = 0;
+        // error:
+        if (result == -1) {
+            object->logger->logEvent("select() error", ERROR);
+            return;
+        }
 
-            // skierowanie odebranego pakietu do dalszej obsługi
-            object->receiveDatagram(buffer, sizeof(received_packet), src_address);
+        // timeout:
+        else if (result == 0) {
+            // timeout krytyczny?:
+            object->critical_waiting += object->timeout_type;
+            if (object->critical_waiting >= CRITICAL_TO) {
+                object->logger->logEvent(CRITICAL_TO_ERROR, ERROR);
+                object->is_crit_to = true;
+                return;
+            }
+            // zwykly timeout:
+            repeatSending(object);
+        }
+        // otrzymalismy pakiet:
+        else if (FD_ISSET(sock_fd, &readset)) {
+            object->critical_waiting = 0;
 
-            delete buffer;
+            if (recvfrom(sock_fd, &received_packet, sizeof(ProtocolPacket), 0, (struct sockaddr*)&src_address, &address_len) == -1) {
+                object->logger->logEvent("recvfrom(): error - errno: " + std::string(strerror(errno)), ERROR);
+            }
+            else {
+                char *buffer = new char[sizeof(ProtocolPacket)];
+                memcpy(buffer, &received_packet, sizeof(received_packet));
+
+                // skierowanie odebranego pakietu do dalszej obsługi
+                object->receiveDatagram(buffer, sizeof(received_packet), src_address);
+                delete buffer;
+            }
         }
     }
 }
@@ -90,32 +100,87 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
 /*
  * Wysyła podany pakiet na wskazany adres
  */
-void NetworkHandler::sendDatagram(ProtocolPacket packet, sockaddr_in dest_address, NetworkHandler* object, std::string log_msg){
+void NetworkHandler::sendDatagram(ProtocolPacket packet, sockaddr_in dest_address, NetworkHandler* object, std::string log_msg) {
+    //zapamiętaj wysyłany pakiet, jako ostatnio wysłany
+    memcpy(&last_packet, &packet, sizeof(packet));
 
-	//zapamiętaj wysyłany pakiet, jako ostatnio wysłany, ustaw nowy początek liczenia timeoutu
-	memcpy(&last_packet, &packet, sizeof(packet));
-	object->start_waiting = time(NULL);
+    int packet_size = getPacketSize(packet);
+    /*
+     * @ToDo:
+     * obsluga packet_size == -1 ????
+     * */
+    if (packet_size < 0) {
+        object->logger->logEvent("packet_size < 0", ERROR);
+        return;
+    }
 
-	if(sendto(object->sock_fd, &packet, sizeof(packet), 0, (struct sockaddr *) &dest_address, sizeof(dest_address)) == -1){
-
-	}
-
-	// loguj informacje o wysłaniu pakietu, lub retransmisji
-	if(log_msg.length() > 0 && log_msg != RETRANSMISION){
-		object->logger->logEvent(log_msg, INFO);
-	}
-	else if(log_msg.length() > 0 && log_msg == RETRANSMISION){
-		object->logger->logEvent(log_msg, WARNING);
-	}
+    // wyslij datagram:
+    if (sendto(object->sock_fd, &packet, packet_size, 0, (struct sockaddr *) &dest_address, sizeof(dest_address)) == -1) {
+        object->logger->logEvent("sendto(): error - errno: " + std::string(strerror(errno)), ERROR);
+        //return;
+    }
+    // loguj informacje o wysłaniu pakietu lub retransmisji
+    if (log_msg.length() > 0 && log_msg != RETRANSMISION) {
+        object->logger->logEvent(log_msg, INFO);
+    }
+    else if (log_msg.length() > 0 && log_msg == RETRANSMISION) {
+        object->logger->logEvent(log_msg, WARNING);
+    }
 }
 
 /*
  * Metoda, wywoływana w przypadku konieczności retransmisji pakietu 
  */
-void NetworkHandler:: repeatSending(NetworkHandler* object)
-{
-	std::string log_msg = RETRANSMISION;
-	sendDatagram(object->last_packet, object->src_address, object, log_msg);
+void NetworkHandler:: repeatSending(NetworkHandler* object) {
+    std::string log_msg = RETRANSMISION;
+    sendDatagram(object->last_packet, object->src_address, object, log_msg);
+}
+/*
+ * Obsługuje sytuacje, błędnego odczytu/zapisu do pliku. Np na skutek usunięcia zasobu
+ * podczas trawania trasnferu
+ */
+void NetworkHandler:: HanldeFileError(NetworkHandler* object){
+	 object->logger->logEvent(FILE_READING_ERROR, ERROR);
+	 ProtocolPacket packet = object->prot_handler->prepareERR(0);
+	 object->sendDatagram(packet, object->src_address, object, "");
+	 if(object->transferID >= 0){
+		 MessagePrinter::print("Transfer stopped. TransferID = " + std::to_string(transferID));
+	 }
 }
 
+/*
+ *  Przyjmuje jako argument pakiet, kótry poddaje interpretacji
+ *  sprawdza ile jest w nim użytecznych danych na podstawie typu.
+ *  Przykładowo pakiet ACK, zawiera tylko type oraz number należy wysłać tylko pierwsze 4
+ *  bajty struktury ProtocolPacket, reszta jest redundantna
+ */
+int NetworkHandler:: getPacketSize(ProtocolPacket packet) {
+    ProtocolHandler handler;
 
+    // 4 bajty użytecznych danych dla ACK
+    if(handler.isACK(packet)){
+        return 4;
+    }
+    // 4156 - max, wszystkie dane użyteczne dla DATA
+    else if(handler.isDATA(packet)){
+        return 4156;
+    }
+    // 4 bajty użytecznych danych dla ERR
+    else if(handler.isERR(packet)){
+        return 4;
+    }
+    // 60 bajtów użytecznych danych dla RQ
+    else if(handler.isRD(packet)){
+        return 60;
+    }
+    // 8 bajtów użytecznych danych dla RESP
+    else if(handler.isRESP(packet)){
+        return 8;
+    }
+    // 60 bajtów użytecznych danych dla RQ
+    else if(handler.isRQ(packet)){
+        return 60;
+    }
+
+    return -1;
+}
