@@ -2,7 +2,7 @@
 #define RUNNINGTASKS_H_
 
 #include <list>
-#include <iostream> // ??? Tymczasowo (w celach debugowania)
+#include <iostream>
 #include <pthread.h>
 #include <string>
 
@@ -16,7 +16,6 @@
 /*
  * Klasa zarzadcy biezacych transferow
  */
-
 class RunningTasks
 {
 private:
@@ -24,9 +23,9 @@ private:
     // Pojedynczy element tablicy biezacych zadan (tak jak w dok. wstepnej)
     struct RunningTask
     {
-        bool dirty;                     // Flaga zkonczenia watku
-        bool interruptReq;              // Flaga zadania przerwania watku
-        std::string filename;           // Nazwa poberianego pliku
+        bool dirty;                     	 // Flaga zkonczenia watku
+        bool interruptReq;              	 // Flaga zadania przerwania watku
+        std::string filename;           	 // Nazwa poberianego pliku
         unsigned long int downloadedBytes;   // Liczba pobranych bajtow danych
         unsigned long int allBytes;          // Rozmiar pliku w bajtach
 
@@ -85,9 +84,14 @@ public:
     // Format: transferID: status "nazwa pliku" bajty_pobrane of rozmiar_pliku B [INT - jesli ustawiona zadanie przerwania]
     void debug__printAllTasks();
 
-
-    //Zwraca informacje czy transfer o zadanym transferze ma się zakończyć
+    //Zwraca informacje czy transfer o zadanym transferID ma się zakończyć
     bool checkTerminateFlag(int transferID);
+
+	// Sprawdza czy wszystkie pracujące wątki już sie zakończyły
+	bool checkThreads();
+
+	// Funkcja, która realizuje cancel dla wszystkich aktywnych wątków jednocześnie
+	void cancelAllThreads();
 };
 
 #endif

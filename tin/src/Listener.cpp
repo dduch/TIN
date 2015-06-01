@@ -7,6 +7,7 @@ Listener* Listener:: instance = NULL;
 
 
 Listener:: Listener() {
+	// utworzenie powiązanego obiektu, zarządzającego obsługą pakietów
     prot_handler = new ProtocolHandler();
 }
 
@@ -70,6 +71,7 @@ void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address) {
     // jeśli węzeł posiada niepusty plik o wskazanej nazwie - odpowiada na zgłoszenie:
     if ( FileManager::checkFile(file_name)) {
         int file_size = FileManager::getFileSize(file_name);
+
         if (file_size > 0) {
             ProtocolPacket packet = prot_handler->prepareRESP(file_size);
             sendDatagram(packet, src_address, this, std::string());
@@ -85,8 +87,18 @@ void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address) {
  */
 void Listener::handleRDPacket(ProtocolPacket req, sockaddr_in src_address) {
     Arguments arguments;
-    memcpy(&arguments.file_name, &req.filename, MAX_FILENAME_SIZE); // MAX_FILENAME_SIZE????
+    std::string file_n(req.filename);
+
+    int newTransferID = RunningTasks::getIstance().addNewTask("sender_" + file_n);
+
+    if (newTransferID < 0) { // Brak miejsca na nowy watek wysyłania
+    	MessagePrinter::print("Cannot send, too many threads");
+        return;
+    }
+
+    memcpy(&arguments.file_name, &req.filename, MAX_FILENAME_SIZE);
     memcpy(&arguments.dest_address, &src_address, sizeof(src_address));
+    memcpy(&arguments.transferID, &newTransferID, sizeof(int));
 
     pthread_t tid;
     if (pthread_create(&tid, NULL, Sender::run, &arguments)) {
@@ -116,14 +128,13 @@ void Listener:: startListen(sockaddr_in src_address, int sock_fd) {
     socklen_t address_len = sizeof(src_address);
     while(1) {
         if (recvfrom(sock_fd, &received_packet, sizeof(ProtocolPacket), 0, (struct sockaddr*)&src_address, &address_len) == -1) {
-            /*
-             * @ToDo:
-             * obsluga bledu recvfrom ????
-             * */
+           // jeśli podczas odbierania wiadomości wykryto błąd to zignoruj go i nasłuchuj dalej
+           continue;
         }
         else {
             char *buffer = new char[sizeof(ProtocolPacket)];
             memcpy(buffer, &received_packet, sizeof(received_packet));
+
             //kieruje odebrany pakiet do dalszej obsługi
             receiveDatagram(buffer, sizeof(received_packet), src_address);
         }

@@ -19,7 +19,10 @@ const std::string MSG_HELP = "\" - type \"help\" for command list";
 const std::string MSG_TOO_MANY_DOWNLOADS = "ERROR: Too many running downloads to start new task";
 const std::string MSG_STARTED_NEW_DOWNLOAD = "Commencing download: TransferID = \"";
 const std::string MSG_NO_RUNNING_TASK = "No running downloads";
-const std::string MSG_DOWNLOAD_STOP = "Stopping download ...";
+const std::string MSG_DOWNLOAD_STOP = "Stopping thread ...";
+const std::string MSG_FILE_EXISTS = "You already have such file.";
+const std::string MSG_CLOSING = "Closing Application ... Please wait.";
+
 
 
 const std::string MSG_HELPINFO =    "Usage:\n\
@@ -44,8 +47,14 @@ void UI::run(void){
         switch (parseCommand()){ // Translacja: command -> CommandType
             case GET :
                 getFileName(); // filename = "nazwa_pliku"
-                // @todo: sprawdz w systemie plikow czy nie mamy juz takiego w resources
-                startNewTransfer(); // Rozpocznij nowy transfer
+
+                //sprawdz w systemie plikow czy nie mamy juz takiego w resources
+                if(FileManager::checkFile(filename)){
+                	 MessagePrinter::print(MSG_FILE_EXISTS); // Nieporawny identyfikator
+                }
+                else{
+                	startNewTransfer(); // Rozpocznij nowy transfer
+                }
                 break;
 
             case CANCEL :
@@ -82,7 +91,8 @@ void UI::run(void){
                 break;
 
             case EXIT :
-                running = false; // ??? Na razie takie trywialne zakonczenie - warto sie zastanowic czy potrzebne jakies porzadki
+            	closeApplication();
+            	return;
         }
     }
 }
@@ -242,3 +252,29 @@ void UI::chceckTransferProgress(){
         MessagePrinter::print(tmp);
     }
 }
+/*
+ * Kończy działanie programu w uprzorządkowany sposób - wysyła do wszystykich
+ * wątków pobierających komendę zakończenia. Oczekuje aż wszystkie się zakończą
+ */
+void UI:: closeApplication()
+{
+	MessagePrinter::print(MSG_CLOSING);
+	RunningTasks::getIstance().cancelAllThreads();
+
+	/*
+	 * Funkcja po wysłaniu polecenia cancel do wszystkich wątków wysyłających i odbierających,
+	 * przechodzi w tryb sprawdzania czy już się zakończyły. Nie ma ryzyka zapętlenia - najpoźniej
+	 * po czasie timeout, równym największemy z timeoutów niekrytycznych poprawnie zakończy sowje działanie.
+	 */
+	while(1){
+		sleep(1);
+		if(RunningTasks::getIstance().checkThreads()){
+			break;
+		}
+	}
+	return;
+}
+
+
+
+

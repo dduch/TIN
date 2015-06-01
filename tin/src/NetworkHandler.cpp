@@ -1,6 +1,8 @@
 #include "NetworkHandler.h"
 #include "ProtocolHandler.h"
 #include "RunningTasks.h"
+#include "Downloader.h"
+#include "Sender.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -11,6 +13,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <cerrno>
+#include <typeinfo>
 
 
 NetworkHandler:: ~NetworkHandler() {}
@@ -54,6 +57,24 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
 
         // po odblokowaniu najpierw sprawdzamy czy moze watek nie dostal polecenia zakonczenia od uzytkownika:
         if (RunningTasks::getIstance().checkTerminateFlag(object->transferID)) {
+
+        	ProtocolPacket packet;
+
+        	Downloader* downloader = dynamic_cast<Downloader*>(object);
+        	Sender* sender = dynamic_cast<Sender*>(object);
+        	std::string log_msg = SENT_ERROR_PACKET;
+
+        	if(downloader != nullptr){
+        		packet = object->prot_handler->prepareERR(ERROR_CODE1);
+        		log_msg += std::to_string(ERROR_CODE1);
+        	}
+        	else if(sender != nullptr){
+        		packet = object->prot_handler->prepareERR(ERROR_CODE0);
+        		log_msg += std::to_string(ERROR_CODE0);
+        	}
+
+
+        	sendDatagram(packet, object->src_address, object, log_msg);
         	object->logger->logEvent(TERMINATE_REQUEST, WARNING);
             RunningTasks::getIstance().freeTaskSlot(object->transferID);
             FileManager::unlinkFile(object->filename);
@@ -105,14 +126,6 @@ void NetworkHandler::sendDatagram(ProtocolPacket packet, sockaddr_in dest_addres
     memcpy(&last_packet, &packet, sizeof(packet));
 
     int packet_size = getPacketSize(packet);
-    /*
-     * @ToDo:
-     * obsluga packet_size == -1 ????
-     * */
-    if (packet_size < 0) {
-        object->logger->logEvent("packet_size < 0", ERROR);
-        return;
-    }
 
     // wyslij datagram:
     if (sendto(object->sock_fd, &packet, packet_size, 0, (struct sockaddr *) &dest_address, sizeof(dest_address)) == -1) {
@@ -182,5 +195,6 @@ int NetworkHandler:: getPacketSize(ProtocolPacket packet) {
         return 60;
     }
 
-    return -1;
+    // maksymalny rozmiar datagramu
+    return 4156;
 }

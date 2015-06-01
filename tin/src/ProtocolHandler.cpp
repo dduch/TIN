@@ -2,11 +2,24 @@
 #include <iostream>
 #include <string.h>
 
+/*
+ * Wektor komunikatów z błędami, odpowiednia wartość odczytywana  na podstawie ortrzymanego kodu błędu
+ */
+std::vector<std::string> ProtocolHandler::errors_code = {
+		" Użytkownik, z którym się komunikujesz zakończył działanie wątku wysyłającego",
+		" Użytkownik, z którym się komunikujesz zakończył działanie wątku odbierającego",
+		" Nastąpił problem z zapisem do pliku po stronie odbiorcy",
+		" Nastąpił problem z odczytem z pliku po stronie nadawcy"
+};
 
 ProtocolHandler:: ProtocolHandler() {}
 
 ProtocolHandler:: ~ProtocolHandler() {}
 
+
+/*
+ * Funkcja, której zadaniem jest przygotowanie pakietów danych
+ */
 struct ProtocolPacket ProtocolHandler::prepareDATA(unsigned int data_number, unsigned int data_data_size, char* data, unsigned int size_of_data)
 {
 	struct ProtocolPacket data_packet;

@@ -157,3 +157,34 @@ void RunningTasks::debug__printAllTasks() {
     std::cout << "\n";
     }
 }
+
+/*
+ * Sprawdza czy wszystkie aktywne wątki: wysyłające lub pobierające zostały poprawnie zakończone
+ */
+bool RunningTasks:: checkThreads(){
+	for(int i = 0; i < ntasks; ++i)
+	{
+		if(tasks[i].dirty)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+/*
+ * Wysyła polecenie 'cancel' do wszystkich aktywnych wątków - wywoływana
+ * przez wątek UI w celu zakończenia wszystkich wątków w deterministyczny i kontrolowany sposób
+ */
+void RunningTasks:: cancelAllThreads(){
+	for(int i = 0; i <= ntasks; ++i)
+	{
+		if(tasks[i].dirty)
+		{
+			terminateTask(i);
+		}
+	}
+}
+
+
+

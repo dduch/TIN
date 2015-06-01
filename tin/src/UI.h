@@ -7,6 +7,7 @@
 #include "Downloader.h"
 #include "MessagePrinter.h"
 #include "RunningTasks.h"
+#include <unistd.h>
 
 /*
  * Klasa tekstowego interfejsu uzytkownika
@@ -19,6 +20,11 @@ private:
     std::string command;
     std::string filename;
     int chosenTransferID;
+
+    /*
+     * zbiór komend, jakie po wprowadzeniu przez użytkownika zostaną zinterpretowane jako
+     * poprawne polecenia
+     */
     enum CommandType {
         GET, CANCEL, SHOW, TRANSFERINFO, EXIT, UNKNOWN, HELP
     };
@@ -50,6 +56,8 @@ private:
 	// Wypisuje postepy wybranego transferu
 	void chceckTransferProgress();
 
+	// Kończy działanie aplikacji w uporządkowany sposób
+	void closeApplication();
 
 public:
 	// Watek UI

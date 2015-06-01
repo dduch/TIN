@@ -6,11 +6,12 @@
  * Tworzy nowy wątek Sendera - rozpoczyna wysyłanie pliku
  * otwiera plik do transmisji, zapamietuj adres, z którym sender ma prowadzić transmisję
  */
-Sender::Sender(std::string filename, sockaddr_in dest_address) {
+Sender::Sender(std::string filename, sockaddr_in dest_address, int transferID) {
     this->file_descriptor = FileManager::openFile(filename, READ_F);
     this->prot_handler = new ProtocolHandler();
     this->logger = new Logger("Sender", filename, pthread_self());
     this->filename = filename;
+    this->transferID = transferID;
     lastData = false;
     // zapamiętaj z jakiego adresu przyszło żądanie transferu - gdzie należy wysyłać pakiety
     memcpy(&this->src_address, &dest_address, sizeof(dest_address));
@@ -47,6 +48,9 @@ void Sender:: receiveDatagram(char* buffer, int buff_len,  sockaddr_in src_addre
     if (prot_handler->isACK(packet)) {
     	handleACKPacket(packet, src_address);
     }
+    else if (prot_handler->isERR(packet)) {
+       	handleERRPacket(packet, src_address);
+    }
 }
 
 
@@ -54,10 +58,11 @@ void* Sender:: run(void* req) {
     ProtocolPacket packet;
 
     Arguments* arg = (Arguments*)req;
-    Sender* sender = new Sender(arg->file_name, arg->dest_address);
+    Sender* sender = new Sender(arg->file_name, arg->dest_address, arg->transferID);
 
     // czytaj z pliku:
     int bytes = FileManager::readFile(sender->file_descriptor, sender->data_buffer, sizeof(data_buffer));
+
     // blad odczytu pliku:
     if (bytes < 0) {
     	sender->HanldeFileError(sender);
@@ -112,6 +117,7 @@ void Sender:: handleACKPacket(ProtocolPacket rd, sockaddr_in src_address) {
     ProtocolPacket packet;
     // czytaj kolejna porcje pliku do wyslania:
     int bytes = FileManager::readFile(this->file_descriptor, this->data_buffer, sizeof(data_buffer));
+
     // blad odczytu z pliku:
     if (bytes < 0) {
     	this->HanldeFileError(this);
@@ -122,6 +128,7 @@ void Sender:: handleACKPacket(ProtocolPacket rd, sockaddr_in src_address) {
     	lastData = true;
     }
     sent_data += bytes;
+
     // wysylamy DATA, logujemy ze dostalismy ACK, ustawiamy timeout:
     packet = prot_handler->prepareDATA(++current_packet, bytes, this->data_buffer, bytes);
     logger->logEvent(ACK_RECEIVED, INFO);
@@ -132,6 +139,10 @@ void Sender:: handleACKPacket(ProtocolPacket rd, sockaddr_in src_address) {
 
 
 void Sender:: handleERRPacket(ProtocolPacket rd, sockaddr_in src_address) {
-    this->logger->logEvent("Transfer zakońćzony niepowodzeniem -pakiet ERROR kod" + rd.number, ERROR);
+    this->logger->logEvent
+    			("Transfer zakończony niepowodzeniem -pakiet ERROR kod" + rd.number + ProtocolHandler::errors_code[rd.number], ERROR);
+    MessagePrinter::print("Downloading stopped - ERROR packet. TransferID = " + std::to_string(transferID));
+    RunningTasks::getIstance().freeTaskSlot(transferID);
+    FileManager::unlinkFile(filename);
     pthread_exit(NULL);
 }

@@ -123,8 +123,9 @@ public:
  * Sender urchamiany z poziomu Listnera wymaga zawartych w strukturze argumentów.
  */
 struct Arguments {
-        char file_name[MAX_FILENAME_SIZE];
+    char file_name[MAX_FILENAME_SIZE];
 	sockaddr_in dest_address;
+	int transferID;
 };
 
 #endif 

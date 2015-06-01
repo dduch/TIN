@@ -11,6 +11,7 @@
 Downloader:: Downloader(std::string filename, int transferID) {
     this->filename = filename;
     this->transferID = transferID;
+
     //utwórz powiązane obiekty: logera i protocol handlera
     this->prot_handler = new ProtocolHandler();
     this->logger = new Logger("Downloader", filename, pthread_self());
@@ -55,6 +56,7 @@ bool Downloader:: connectInit() {
     bzero(&broadcast_address, sizeof(broadcast_address));
     memcpy((char *) &broadcast_address.sin_addr, (char *) hp->h_addr, hp->h_length);
     broadcast_address.sin_family = AF_INET;
+
     //broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
     broadcast_address.sin_port = htons(SERVER_PORT);
 
@@ -87,6 +89,9 @@ void Downloader:: receiveDatagram(char* buffer, int buff_len, sockaddr_in src_ad
     else if (prot_handler->isDATA(packet)) {
     	handleDATAPacket(packet, src_address);
     }
+    else if (prot_handler->isERR(packet)) {
+       	handleERRPacket(packet, src_address);
+    }
 }
 
 /*
@@ -110,7 +115,8 @@ void* Downloader:: run(void* req) {
 
             // Nastąpił krytyczny timeout - zakończenie transferu:
             if (downloader->is_crit_to) {
-                MessagePrinter::print("Downloading stopped. TransferID = " + std::to_string(transferID));
+                MessagePrinter::print("Downloading stopped. TransferID = " + std::to_string(transferID)
+                							+ " No scuch file or unexpected error");
                 RunningTasks::getIstance().freeTaskSlot(transferID);
                 FileManager::unlinkFile(filename);
             }
@@ -166,7 +172,8 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
  */
 void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_address) {
     bool lastData = false;
-    // ostatni blok DATA?
+
+    //  jeśli odebrano ostatni blok danych...
     if (data_packet.data_size < MAX_DATA_BLOCK_SIZE){
         lastData = true;
     }
@@ -217,8 +224,12 @@ void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_a
  * Obsługuje pakiet ERROR - loguje do pliku informacje o nieudanym trasnferze, końćzy wątek
  */
 void Downloader:: handleERRPacket(ProtocolPacket rd, sockaddr_in src_address) {
-    this->logger->logEvent("Transfer zakończony niepowodzeniem -pakiet ERROR kod" + rd.number, ERROR);
+
+	// Wyświetlenie i zapsianie informacji o otrzymanym pakiecie błędu
+	this->logger->logEvent("Transfer zakończony niepowodzeniem - pakiet ERROR kod" + rd.number + ProtocolHandler::errors_code[rd.number], ERROR);
     MessagePrinter::print("Downloading stopped - ERROR packet. TransferID = " + std::to_string(transferID));
+
+    // Kontrolowane zakończenie wątku, usunięcie fragmentu pliku, do którego pisano dane
     RunningTasks::getIstance().freeTaskSlot(transferID);
     FileManager::unlinkFile(filename);
     pthread_exit(NULL);

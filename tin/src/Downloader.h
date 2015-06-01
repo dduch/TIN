@@ -14,7 +14,7 @@ private:
 	 *  Pola potrzebne do transferu w obiekcie pobierającym:
 	 */
         bool is_RESP_received = false;                      // czy odebrano jakikolwiek pakiet RESP
-        struct sockaddr_in broadcast_address;		    // adres broadcastowy, na który należy wysłać żądanie
+        struct sockaddr_in broadcast_address;		    	// adres broadcastowy, na który należy wysłać żądanie
 
         bool sendBroadcast(std::string filename);           // wyślij żądanie udostępnienia pliku do wszystkich węzłów
         bool connectInit();                                 // zainicjuj połączenie
@@ -29,7 +29,7 @@ private:
 	void handleERRPacket(ProtocolPacket err, sockaddr_in src_address);
 	
 	/*
-         * Odziedziczone funkcje wirtualne
+     * Odziedziczone funkcje wirtualne
 	 */
 	/*
 	 * Funkcja realizująca 'bindowanie' gniazda
@@ -42,10 +42,10 @@ private:
 	virtual void receiveDatagram(char* buffer, int buff_len, sockaddr_in src_address);
 
 public:
-        Downloader(std::string filename, int transferID);
-        ~Downloader();
+    Downloader(std::string filename, int transferID);
+    ~Downloader();
 
-        int received_data; // ???
+    int received_data; 			// przechowuje aktualnie pobraną liczbę bajtów
 	/*
 	 * statyczna metoda uruchamiana  jako metoda startowa w nowym wątku
 	 */
