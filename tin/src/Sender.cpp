@@ -93,6 +93,13 @@ void* Sender:: run(void* req) {
 
     // nasluchuj ACK:
     sender->startListen(sender->my_address, sender->sock_fd, sender);
+
+    // Nastąpił krytyczny timeout - zakończenie transferu:
+    if (sender->is_crit_to) {
+        RunningTasks::getIstance().freeTaskSlot(sender->transferID);
+        FileManager::unlinkFile(sender->filename);
+    }
+
     sender->logger->logEvent(FINISH_SENDING, INFO);
 
     return (void*)0;
