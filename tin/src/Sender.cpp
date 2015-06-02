@@ -15,6 +15,7 @@ Sender::Sender(std::string filename, sockaddr_in dest_address, int transferID) {
     lastData = false;
     // zapamiętaj z jakiego adresu przyszło żądanie transferu - gdzie należy wysyłać pakiety
     memcpy(&this->src_address, &dest_address, sizeof(dest_address));
+
     // stworz gniazdo:
     if (createSocket()) {
         bindSocket();
@@ -137,12 +138,15 @@ void Sender:: handleACKPacket(ProtocolPacket rd, sockaddr_in src_address) {
     sendDatagram(packet, src_address, this, log_msg);
 }
 
-
+/*
+ * Obsługuje pakiet ERROR - loguje do pliku informacje o nieudanym trasnferze, kończy wątek
+ */
 void Sender:: handleERRPacket(ProtocolPacket rd, sockaddr_in src_address) {
     this->logger->logEvent
     			("Transfer zakończony niepowodzeniem -pakiet ERROR kod" + rd.number + ProtocolHandler::errors_code[rd.number], ERROR);
-    MessagePrinter::print("Downloading stopped - ERROR packet. TransferID = " + std::to_string(transferID));
+
+    // Kontrolowane zakończenie wątku
+    MessagePrinter::print("Sending stopped - ERROR packet. TransferID = " + std::to_string(transferID));
     RunningTasks::getIstance().freeTaskSlot(transferID);
-    FileManager::unlinkFile(filename);
     pthread_exit(NULL);
 }

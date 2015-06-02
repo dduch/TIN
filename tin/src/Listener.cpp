@@ -5,7 +5,6 @@
 // Początkowo nie istnieje żadna instancja Listenera, należy ją utworzyć
 Listener* Listener:: instance = NULL;
 
-
 Listener:: Listener() {
 	// utworzenie powiązanego obiektu, zarządzającego obsługą pakietów
     prot_handler = new ProtocolHandler();
@@ -72,6 +71,12 @@ void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address) {
     if ( FileManager::checkFile(file_name)) {
         int file_size = FileManager::getFileSize(file_name);
 
+        // jesli rozmiar wiekszy niz 4GB - wyslij pakiet ERROR
+        if(file_size >= 4294967296)
+        {
+        	ProtocolPacket packet = prot_handler->prepareERR(ERROR_CODE4);
+        	sendDatagram(packet, src_address, this, std::string());
+        }
         if (file_size > 0) {
             ProtocolPacket packet = prot_handler->prepareRESP(file_size);
             sendDatagram(packet, src_address, this, std::string());

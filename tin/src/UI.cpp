@@ -22,8 +22,7 @@ const std::string MSG_NO_RUNNING_TASK = "No running downloads";
 const std::string MSG_DOWNLOAD_STOP = "Stopping thread ...";
 const std::string MSG_FILE_EXISTS = "You already have such file.";
 const std::string MSG_CLOSING = "Closing Application ... Please wait.";
-
-
+const std::string MSG_TOO_LONG_FILENAME = "Name of the file is too long";
 
 const std::string MSG_HELPINFO =    "Usage:\n\
     get FILE                - download FILE from remote server\n\
@@ -171,6 +170,12 @@ bool UI::getTransferCredentials(){
 
 // Rozpoczyna nowy transfer
 void UI::startNewTransfer(){
+	//Sprawdzamy ogranicznie na długość nazwy pliku
+	if(filename.length() > 50){
+		MessagePrinter::print(MSG_TOO_LONG_FILENAME);
+		return;
+	}
+
     int* newTransferID = new int;
     *newTransferID = RunningTasks::getIstance().addNewTask(filename);
     if (*newTransferID < 0) { // Brak miejsca na nowy watek pobierania

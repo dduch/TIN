@@ -8,6 +8,7 @@
 #define ERROR_CODE1 1
 #define ERROR_CODE2 2
 #define ERROR_CODE3 3
+#define ERROR_CODE4 4
 
 //Rodzaje pakietow jak w dokumentacji
 #define DATA 		0x00

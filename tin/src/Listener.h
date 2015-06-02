@@ -33,8 +33,8 @@ protected:
 
 public:
     ~Listener();                         // zamknij gniazdo - zwolnij port
-     static void* run(void*);            // statyczna metoda startowa uruchamiana w nowym wątku
-     static Listener* getInstance();     // Zwraca wskaźnik do istniejącej instancji lub tworzy
+    static void* run(void*);            // statyczna metoda startowa uruchamiana w nowym wątku
+    static Listener* getInstance();     // Zwraca wskaźnik do istniejącej instancji lub tworzy
                                          // nową jesli takowej nie było
 };
 

@@ -6,7 +6,7 @@
 class Sender : public NetworkHandler{
 private:
     char data_buffer[MAX_DATA_BLOCK_SIZE];			// bufor do przechowywania danych, podlegających transmicji
-    bool lastData;						// czy wysłano już ostatni pakiet
+    bool lastData;									// czy wysłano już ostatni pakiet
 
 	void handleACKPacket(ProtocolPacket rd, sockaddr_in src_address);	// obsługa pakietów ACK
 	void handleERRPacket(ProtocolPacket err, sockaddr_in src_address);	// obsługa pakietów ERR

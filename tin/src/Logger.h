@@ -37,7 +37,7 @@ const std::string ERROR = "ERROR: ";
 class Logger{
 
 private:
-    int logfd; // Deskryptor pliku logu
+    int logfd; 					// Deskryptor pliku logu
     bool loggingEnabled;
 
 public:
