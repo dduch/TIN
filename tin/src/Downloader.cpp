@@ -21,6 +21,7 @@ Downloader:: Downloader(std::string filename, int transferID) {
  * Zamknij gniazdo i skojarzony port
  */
 Downloader:: ~Downloader() {
+	RunningTasks::getIstance().freeTaskSlot(transferID);
     closeSocket(sock_fd);
     delete(prot_handler);
     delete(logger);
@@ -146,12 +147,9 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
 
     //bład podczas tworzenia pliku - wyślij paket ERROR, transmisja zakończona
     if (this->file_descriptor < 0) {
-        this->logger->logEvent(FILE_READING_ERROR, ERROR);
-        packet = this->prot_handler->prepareERR(0);
-        this->sendDatagram(packet, this->src_address, this, "");
-        RunningTasks::getIstance().freeTaskSlot(this->transferID);
-        return;
+    	this->HanldeFileError(this, FILE_WRITINIG_ERROR, ERROR_CODE2);
     }
+
     // zaktualizuj informacje o rozmiarze pliku, będącego przedmiotem transferu
     this->file_size = resp_packet.data_size;
     RunningTasks::getIstance().updateFileSize(this->transferID, this->file_size);
@@ -181,14 +179,10 @@ void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_a
     ProtocolPacket packet;
 
     // jesli przyszedl pakiet o numerze o jeden większym niż aktualnie odebrany - wszystko OK:
-    if (data_packet.number == current_packet+1) {
+    if (data_packet.number == current_packet + 1) {
 
     	if(FileManager::appendFile(this->file_descriptor, data_packet.data, data_packet.data_size) < 0){
-    		this->HanldeFileError(this);
-    	    RunningTasks::getIstance().freeTaskSlot(transferID);
-    	    FileManager::unlinkFile(filename);
-    	    pthread_exit(NULL);
-    		return;
+    		this->HanldeFileError(this, FILE_WRITINIG_ERROR, ERROR_CODE2);
         }
 
         received_data += data_packet.data_size;
@@ -226,7 +220,7 @@ void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_a
 void Downloader:: handleERRPacket(ProtocolPacket rd, sockaddr_in src_address) {
 
 	// Wyświetlenie i zapsianie informacji o otrzymanym pakiecie błędu
-	this->logger->logEvent("Transfer zakończony niepowodzeniem - pakiet ERROR kod" + rd.number + ProtocolHandler::errors_code[rd.number], ERROR);
+	this->logger->logEvent("Transfer zakończony niepowodzeniem - pakiet ERROR kod: " + rd.number + ProtocolHandler::errors_code[rd.number], ERROR);
     MessagePrinter::print("Downloading stopped - ERROR packet. TransferID = " + std::to_string(transferID));
 
     // Kontrolowane zakończenie wątku, usunięcie fragmentu pliku, do którego pisano dane

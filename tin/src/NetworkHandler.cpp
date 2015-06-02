@@ -129,8 +129,7 @@ void NetworkHandler::sendDatagram(ProtocolPacket packet, sockaddr_in dest_addres
 
     // wyslij datagram:
     if (sendto(object->sock_fd, &packet, packet_size, 0, (struct sockaddr *) &dest_address, sizeof(dest_address)) == -1) {
-        object->logger->logEvent("sendto(): error - errno: " + std::string(strerror(errno)), ERROR);
-        //return;
+        return;
     }
     // loguj informacje o wysłaniu pakietu lub retransmisji
     if (log_msg.length() > 0 && log_msg != RETRANSMISION) {
@@ -152,13 +151,19 @@ void NetworkHandler:: repeatSending(NetworkHandler* object) {
  * Obsługuje sytuacje, błędnego odczytu/zapisu do pliku. Np na skutek usunięcia zasobu
  * podczas trawania trasnferu
  */
-void NetworkHandler:: HanldeFileError(NetworkHandler* object){
-	 object->logger->logEvent(FILE_READING_ERROR, ERROR);
-	 ProtocolPacket packet = object->prot_handler->prepareERR(0);
+void NetworkHandler:: HanldeFileError(NetworkHandler* object, std::string log_msg, int error){
+	 object->logger->logEvent(log_msg, ERROR);
+	 ProtocolPacket packet = object->prot_handler->prepareERR(error);
 	 object->sendDatagram(packet, object->src_address, object, "");
+
 	 if(object->transferID >= 0){
 		 MessagePrinter::print("Transfer stopped. TransferID = " + std::to_string(transferID));
 	 }
+
+	 // kontrolowane zakończenie wątku
+	 RunningTasks::getIstance().freeTaskSlot(transferID);
+	 FileManager::unlinkFile(object->filename);
+	 pthread_exit(NULL);
 }
 
 /*

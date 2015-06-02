@@ -9,7 +9,8 @@ std::vector<std::string> ProtocolHandler::errors_code = {
 		" Użytkownik, z którym się komunikujesz zakończył działanie wątku wysyłającego",
 		" Użytkownik, z którym się komunikujesz zakończył działanie wątku odbierającego",
 		" Nastąpił problem z zapisem do pliku po stronie odbiorcy",
-		" Nastąpił problem z odczytem z pliku po stronie nadawcy"
+		" Nastąpił problem z odczytem z pliku po stronie nadawcy",
+		" Nie można pobrać pliku, rozmiar przekracza maksymalną wartość"
 };
 
 ProtocolHandler:: ProtocolHandler() {}

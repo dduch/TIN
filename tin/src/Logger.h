@@ -24,8 +24,10 @@ const std::string ACK_RECEIVED = "Odebrano ACK dla DATA ";
 const std::string RETRANSMISION = "Retransmisja pakietu";
 const std::string CRITICAL_TO_ERROR = "Wystąpił krytyczny time - out, transfer zakończony niepowodzeniem";
 const std::string FILE_READING_ERROR = "Problem z przygotowaniem pakietu, transfer zakończony niepowodzeniem";
+const std::string FILE_WRITINIG_ERROR = "Problem z zapisaniem pakietu, transfer zakończony niepowodzeniem";
 const std::string TERMINATE_REQUEST = "Transfer przerwany przez użytkownika";
 const std::string SENT_ERROR_PACKET = "wysłano pakiet ERROR o numerze: ";
+
 
 /*
  * Typowe prefixy kominikatów

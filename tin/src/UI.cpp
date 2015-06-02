@@ -16,9 +16,9 @@ const std::string MSG_WELCOME = "Welcome to TIN UDP File Downloader!\nType \"hel
 const std::string MSG_BADID = "ERROR: Incorrect transferid or transfer finished";
 const std::string MSG_BADCMD = "ERROR: Unknown command \"";
 const std::string MSG_HELP = "\" - type \"help\" for command list";
-const std::string MSG_TOO_MANY_DOWNLOADS = "ERROR: Too many running downloads to start new task";
+const std::string MSG_TOO_MANY_DOWNLOADS = "ERROR: Too many running threads to start new task";
 const std::string MSG_STARTED_NEW_DOWNLOAD = "Commencing download: TransferID = \"";
-const std::string MSG_NO_RUNNING_TASK = "No running downloads";
+const std::string MSG_NO_RUNNING_TASK = "No running threads";
 const std::string MSG_DOWNLOAD_STOP = "Stopping thread ...";
 const std::string MSG_FILE_EXISTS = "You already have such file.";
 const std::string MSG_CLOSING = "Closing Application ... Please wait.";
@@ -27,8 +27,8 @@ const std::string MSG_TOO_LONG_FILENAME = "Name of the file is too long";
 const std::string MSG_HELPINFO =    "Usage:\n\
     get FILE                - download FILE from remote server\n\
     show                    - show running transfers identificators\n\
-    transferinf TRANSFER_ID - show progress of specified by TRANSFERID_ID download\n\
-    cancel TRANSFER_ID      - terminate specified by TRANSFERID_ID download\n\
+    transferinf TRANSFER_ID - show progress of specified by TRANSFERID_ID thread\n\
+    cancel TRANSFER_ID      - terminate specified by TRANSFERID_ID thread\n\
     exit                    - terminate all transfers and quit application\n\
     help                    - display this help message";
 

@@ -40,7 +40,7 @@ protected:
         struct sockaddr_in src_address;			// sieciowy adres zrodlowy - skad przyszedl pakiet
         int sock_fd;					// deskryptor gniazda
         int my_port;					// port dla danego obiektu sieciowego
-        int file_size;					// rozmiar przesyłanego pliku w bajtach
+        unsigned int file_size;					// rozmiar przesyłanego pliku w bajtach
         int file_descriptor;				// dekryptor pliku, którego transfer dotyczy
         unsigned int current_packet = 0x00000;		// aktualna wartość otrzymanego/wysyłanego pakietu
         std::string filename;				// nazwa pliku, którego transfer dotyczy
@@ -85,7 +85,7 @@ protected:
 	 * Obsługuje sytuacje, błędnego odczytu/zapisu do pliku. Np na skutek usunięcia zasobu
 	 * podczas trawania trasnferu
 	 */
-	virtual void HanldeFileError(NetworkHandler* objet);
+	virtual void HanldeFileError(NetworkHandler* object, std::string log_msg, int error);
 
 	/*
 	 * Funkcje których implementacja różni się w obiektach pochodnych

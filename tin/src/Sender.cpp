@@ -25,6 +25,7 @@ Sender::Sender(std::string filename, sockaddr_in dest_address, int transferID) {
 
 Sender::~Sender() {
     // zamknij plik i gniazdo, usun uzywane obiekty:
+	RunningTasks::getIstance().freeTaskSlot(transferID);
     FileManager::closeFile(this->file_descriptor);
     closeSocket(sock_fd);
     delete(prot_handler);
@@ -46,10 +47,11 @@ bool Sender::bindSocket() {
 
 void Sender:: receiveDatagram(char* buffer, int buff_len,  sockaddr_in src_address) {
     ProtocolPacket packet = prot_handler->interpretDatagram(buffer, buff_len);
+
     if (prot_handler->isACK(packet)) {
     	handleACKPacket(packet, src_address);
     }
-    else if (prot_handler->isERR(packet)) {
+    else if(prot_handler->isERR(packet)) {
        	handleERRPacket(packet, src_address);
     }
 }
@@ -66,9 +68,7 @@ void* Sender:: run(void* req) {
 
     // blad odczytu pliku:
     if (bytes < 0) {
-    	sender->HanldeFileError(sender);
-        delete(sender);
-        return (void*)0;
+    	sender->HanldeFileError(sender, FILE_READING_ERROR, ERROR_CODE3);
     }
     // odczytal mniej niz blok => koniec pliku:
     else if (bytes < MAX_DATA_BLOCK_SIZE) {
@@ -121,7 +121,7 @@ void Sender:: handleACKPacket(ProtocolPacket rd, sockaddr_in src_address) {
 
     // blad odczytu z pliku:
     if (bytes < 0) {
-    	this->HanldeFileError(this);
+    	this->HanldeFileError(this, FILE_READING_ERROR, ERROR_CODE3);
         return;
     }
     // wczytalismy mniej niz blok => ostatnia porcja danych:

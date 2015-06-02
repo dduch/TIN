@@ -69,14 +69,14 @@ void Listener::handleRQPacket(ProtocolPacket req, sockaddr_in src_address) {
     std::string file_name(req.filename);
     // jeśli węzeł posiada niepusty plik o wskazanej nazwie - odpowiada na zgłoszenie:
     if ( FileManager::checkFile(file_name)) {
-        int file_size = FileManager::getFileSize(file_name);
+        long long int file_size = FileManager::getFileSize(file_name);
 
-        // jesli rozmiar wiekszy niz 4GB - wyslij pakiet ERROR
+        // jesli rozmiar wiekszy niz 4GB - ignoruj żądanie
         if(file_size >= 4294967296)
         {
-        	ProtocolPacket packet = prot_handler->prepareERR(ERROR_CODE4);
-        	sendDatagram(packet, src_address, this, std::string());
+        	return;
         }
+
         if (file_size > 0) {
             ProtocolPacket packet = prot_handler->prepareRESP(file_size);
             sendDatagram(packet, src_address, this, std::string());

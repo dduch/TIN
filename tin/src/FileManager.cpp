@@ -108,14 +108,14 @@ Zwraca:
 - -1 gdy nastąpi błąd inny od EBADF i EINVAL (patrz: errno)
 - -2 gdy nastąpi błąd EBADF lub EINVAL (nieprawidłowy deskryptor lub plik nie jest otwarty do pisania)
 */
-int FileManager::getFileSize(std::string filename) {
+long long int FileManager::getFileSize(std::string filename) {
 	int fd = openFile(filename, READ_F);
 
         if(fd < 0) {
 		return -1;
 	}
         else {
-		int bytes = lseek(fd, 0, SEEK_END);
+		long long int bytes = lseek(fd, 0, SEEK_END);
 		if (bytes < 0) {
 			if (errno == EBADF || errno == EINVAL) {
 				close(fd);
