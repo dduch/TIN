@@ -25,7 +25,7 @@ struct ProtocolPacket ProtocolHandler::prepareDATA(unsigned int data_number, uns
 	struct ProtocolPacket data_packet;
 	memcpy(data_packet.data, data, size_of_data);
 	//data_number do 20 bitow, data_data_size do 12 bitow, size_of_data do 1024*32, inaczej WTF
-	data_packet.type = (data_number < 1048576 && data_data_size < 4096 && size_of_data < 1024*32)? DATA : WTF;
+	data_packet.type = (data_number < 1048576 && data_data_size <= 4096 && size_of_data <= 1024*32)? DATA : WTF;
 	data_packet.number = data_number;
 	data_packet.data_size = data_data_size;
 	return data_packet;
