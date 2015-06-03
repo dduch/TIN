@@ -144,6 +144,7 @@ void Downloader:: handleRESPPacket(ProtocolPacket resp_packet, sockaddr_in src_a
 
     ProtocolPacket packet;
     this->file_descriptor = FileManager::createFile(this->filename);
+    memcpy(&this->src_address, &src_address, sizeof(sockaddr_in));
 
     //bład podczas tworzenia pliku - wyślij paket ERROR, transmisja zakończona
     if (this->file_descriptor < 0) {
