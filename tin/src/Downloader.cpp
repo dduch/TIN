@@ -117,7 +117,7 @@ void* Downloader:: run(void* req) {
             // Nastąpił krytyczny timeout - zakończenie transferu:
             if (downloader->is_crit_to) {
                 MessagePrinter::print("Downloading stopped. TransferID = " + std::to_string(transferID)
-                							+ " No scuch file or unexpected error");
+                							+ " No such file or unexpected error");
                 RunningTasks::getIstance().freeTaskSlot(transferID);
                 FileManager::unlinkFile(filename);
             }
