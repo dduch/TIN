@@ -177,6 +177,12 @@ void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_a
         lastData = true;
     }
 
+	// jesli to pierwszy pakiet z danymi, zapamietaj skad przyszedł
+    if(data_packet.number == 1)
+    {
+    	  memcpy(&this->src_address, &src_address, sizeof(sockaddr_in));
+    }
+
     ProtocolPacket packet;
 
     // jesli przyszedl pakiet o numerze o jeden większym niż aktualnie odebrany - wszystko OK:
