@@ -23,6 +23,7 @@ Downloader:: Downloader(std::string filename, int transferID) {
 Downloader:: ~Downloader() {
 	RunningTasks::getIstance().freeTaskSlot(transferID);
     closeSocket(sock_fd);
+    FileManager::closeFile(file_descriptor);
     delete(prot_handler);
     delete(logger);
 }
@@ -205,6 +206,9 @@ void Downloader:: handleDATAPacket(ProtocolPacket data_packet, sockaddr_in src_a
         FileManager::renameFile(filename);
         MessagePrinter::print("Download finished. TransferID: " + std::to_string(transferID));
         logger->logEvent(FINISH_RECEIVING, INFO);
+        closeSocket(sock_fd);
+        delete(prot_handler);
+        delete(logger);
         pthread_exit(NULL);
     }
     // w p.p. wyslij ACK i licz timeout, watek nadal trwa:
@@ -226,6 +230,9 @@ void Downloader:: handleERRPacket(ProtocolPacket rd, sockaddr_in src_address) {
     // Kontrolowane zakończenie wątku, usunięcie fragmentu pliku, do którego pisano dane
     RunningTasks::getIstance().freeTaskSlot(transferID);
     FileManager::unlinkFile(filename);
+    closeSocket(sock_fd);
+    delete(prot_handler);
+    delete(logger);
     pthread_exit(NULL);
 }
 

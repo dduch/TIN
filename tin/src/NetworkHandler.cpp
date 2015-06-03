@@ -64,20 +64,23 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
         	Sender* sender = dynamic_cast<Sender*>(object);
         	std::string log_msg = SENT_ERROR_PACKET;
 
-        	if(downloader != nullptr){
+                if(downloader) {
         		packet = object->prot_handler->prepareERR(ERROR_CODE1);
         		log_msg += std::to_string(ERROR_CODE1);
         	}
-        	else if(sender != nullptr){
+                else if(sender) {
         		packet = object->prot_handler->prepareERR(ERROR_CODE0);
         		log_msg += std::to_string(ERROR_CODE0);
         	}
 
-
         	sendDatagram(packet, object->src_address, object, log_msg);
         	object->logger->logEvent(TERMINATE_REQUEST, WARNING);
             RunningTasks::getIstance().freeTaskSlot(object->transferID);
+            FileManager::closeFile(object->file_descriptor);
             FileManager::unlinkFile(object->filename);
+            object->closeSocket(object->sock_fd);
+            delete(object->prot_handler);
+            delete(object->logger);
             pthread_exit(NULL);
         }
 
@@ -86,7 +89,6 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
             object->logger->logEvent("select() error", ERROR);
             return;
         }
-
         // timeout:
         else if (result == 0) {
             // timeout krytyczny?:
@@ -161,9 +163,14 @@ void NetworkHandler:: HanldeFileError(NetworkHandler* object, std::string log_ms
 	 }
 
 	 // kontrolowane zakończenie wątku
-	 RunningTasks::getIstance().freeTaskSlot(transferID);
-	 FileManager::unlinkFile(object->filename);
-	 pthread_exit(NULL);
+         //RunningTasks::getIstance().freeTaskSlot(transferID);
+         RunningTasks::getIstance().freeTaskSlot(object->transferID);
+         FileManager::closeFile(object->file_descriptor);
+         FileManager::unlinkFile(object->filename);
+         object->closeSocket(object->sock_fd);
+         delete(object->prot_handler);
+         delete(object->logger);
+         pthread_exit(NULL);
 }
 
 /*
