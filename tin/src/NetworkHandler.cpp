@@ -79,8 +79,6 @@ void NetworkHandler:: startListen(sockaddr_in src_address, int sock_fd, NetworkH
             FileManager::closeFile(object->file_descriptor);
             FileManager::unlinkFile(object->filename);
             object->closeSocket(object->sock_fd);
-            delete(object->prot_handler);
-            delete(object->logger);
             pthread_exit(NULL);
         }
 
@@ -163,13 +161,9 @@ void NetworkHandler:: HanldeFileError(NetworkHandler* object, std::string log_ms
 	 }
 
 	 // kontrolowane zakończenie wątku
-         //RunningTasks::getIstance().freeTaskSlot(transferID);
-         RunningTasks::getIstance().freeTaskSlot(object->transferID);
-         FileManager::closeFile(object->file_descriptor);
+         RunningTasks::getIstance().freeTaskSlot(transferID);
          FileManager::unlinkFile(object->filename);
          object->closeSocket(object->sock_fd);
-         delete(object->prot_handler);
-         delete(object->logger);
          pthread_exit(NULL);
 }
 

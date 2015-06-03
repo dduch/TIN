@@ -97,6 +97,7 @@ void* Sender:: run(void* req) {
     // koniec pracy sendera:
     RunningTasks::getIstance().freeTaskSlot(sender->transferID);
     sender->logger->logEvent(FINISH_SENDING, INFO);
+    delete(sender);
 
     return (void*)0;
 }
@@ -105,9 +106,13 @@ void* Sender:: run(void* req) {
 void Sender:: handleACKPacket(ProtocolPacket rd, sockaddr_in src_address) {
     // jesli wyslales ostatni DATA => to jest ostatni ACK -> zakoncz watek:
     if (lastData) {
+        RunningTasks::getIstance().freeTaskSlot(transferID);
     	FileManager::closeFile(this->file_descriptor);
         logger->logEvent(ACK_RECEIVED, INFO);
         logger->logEvent(FINISH_SENDING, INFO);
+        closeSocket(sock_fd);
+        delete(prot_handler);
+        delete(logger);
         pthread_exit(NULL);
     }
 
@@ -151,5 +156,9 @@ void Sender:: handleERRPacket(ProtocolPacket rd, sockaddr_in src_address) {
     // Kontrolowane zakończenie wątku
     MessagePrinter::print("Sending stopped - ERROR packet. TransferID = " + std::to_string(transferID));
     RunningTasks::getIstance().freeTaskSlot(transferID);
+    FileManager::closeFile(this->file_descriptor);
+    closeSocket(sock_fd);
+    delete(prot_handler);
+    delete(logger);
     pthread_exit(NULL);
 }

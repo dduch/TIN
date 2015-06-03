@@ -21,9 +21,8 @@ Downloader:: Downloader(std::string filename, int transferID) {
  * Zamknij gniazdo i skojarzony port
  */
 Downloader:: ~Downloader() {
-	RunningTasks::getIstance().freeTaskSlot(transferID);
+        RunningTasks::getIstance().freeTaskSlot(transferID);
     closeSocket(sock_fd);
-    FileManager::closeFile(file_descriptor);
     delete(prot_handler);
     delete(logger);
 }
